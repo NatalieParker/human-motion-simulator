@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Dashboard</title>
+
+    <!--
+        ============================================================
+        THIRD-PARTY LIBRARY: Firebase JS SDK v10 (compat build)
+        ============================================================
+        Same compat SDK used in controller.html.
+        - firebase-app-compat.js      : Core initialisation
+        - firebase-database-compat.js  : Realtime Database client
+        Both pages must share the same Firebase project so they
+        can read/write the same database paths.
+    -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+    <!--
+        ============================================================
+        THIRD-PARTY LIBRARY: Chart.js v4
+        ============================================================
+        A popular, lightweight canvas-based charting library.
+        We use it to draw a real-time multi-line graph of the
+        six acceleration values (accel x/y/z and gravity x/y/z)
+        over time. Chart.js was chosen because:
+        - Zero dependencies in its UMD bundle
+        - Simple API for line charts with live updates
+        - Good performance for streaming data
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ── Reset & base ─────────────────────────────────── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── Layout container ─────────────────────────────── */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* ── Controls row ─────────────────────────────────── */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .controls button {
+            padding: 0.75rem 2.2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .controls button:active { transform: scale(0.96); }
+
+        #startBtn {
+            background: #16a34a;
+            color: #fff;
+        }
+        #startBtn:hover { background: #15803d; }
+        #startBtn:disabled { background: #475569; color: #94a3b8; cursor: default; }
+
+        #stopBtn {
+            background: #dc2626;
+            color: #fff;
+        }
+        #stopBtn:hover { background: #b91c1c; }
+        #stopBtn:disabled { background: #475569; color: #94a3b8; cursor: default; }
+
+        /* ── Status badge ─────────────────────────────────── */
+        .status-bar {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        #status {
+            display: inline-block;
+            font-size: 0.9rem;
+            padding: 0.4rem 1.2rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .status-idle      { background: #334155; color: #94a3b8; }
+        .status-running   { background: #14532d; color: #4ade80; }
+        .status-stopped   { background: #7f1d1d; color: #fca5a5; }
+
+        /* ── Data cards grid ──────────────────────────────── */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+        .data-card h2 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.2rem 0;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.9rem;
+        }
+        .data-label { color: #94a3b8; }
+        .data-value { color: #f1f5f9; }
+
+        /* ── Chart area ───────────────────────────────────── */
+        .chart-wrapper {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-wrapper h2 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+        }
+        canvas { width: 100% !important; }
+
+        /* ── Responsive tweaks ────────────────────────────── */
+        @media (max-width: 600px) {
+            .data-grid { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sensor Dashboard (Main)</h1>
+
+        <!-- ── Start / Stop controls ──────────────────────── -->
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn" disabled>Stop</button>
+        </div>
+
+        <div class="status-bar">
+            <span id="status" class="status-idle">Idle</span>
+        </div>
+
+        <!-- ── Live numeric readout ───────────────────────── -->
+        <div class="data-grid">
+            <!--
+                Card 1: acceleration (excluding gravity).
+                These values represent pure user-induced motion.
+            -->
+            <div class="data-card">
+                <h2>Acceleration (m/s²)</h2>
+                <div class="data-row"><span class="data-label">x</span><span class="data-value" id="ax">—</span></div>
+                <div class="data-row"><span class="data-label">y</span><span class="data-value" id="ay">—</span></div>
+                <div class="data-row"><span class="data-label">z</span><span class="data-value" id="az">—</span></div>
+            </div>
+
+            <!--
+                Card 2: acceleration including gravity.
+                Includes the ~9.81 m/s² gravitational component.
+            -->
+            <div class="data-card">
+                <h2>Acceleration incl. Gravity (m/s²)</h2>
+                <div class="data-row"><span class="data-label">x</span><span class="data-value" id="agx">—</span></div>
+                <div class="data-row"><span class="data-label">y</span><span class="data-value" id="agy">—</span></div>
+                <div class="data-row"><span class="data-label">z</span><span class="data-value" id="agz">—</span></div>
+            </div>
+        </div>
+
+        <!-- ── Real-time chart ────────────────────────────── -->
+        <div class="chart-wrapper">
+            <h2>Acceleration vs Time</h2>
+            <!--
+                Chart.js renders into this <canvas>.
+                We maintain a rolling window of the last MAX_POINTS
+                samples so the chart stays readable and performant.
+            -->
+            <canvas id="chart" height="280"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // ────────────────────────────────────────────────────
+        //  Firebase configuration
+        // ────────────────────────────────────────────────────
+        // IMPORTANT: Replace these placeholder values with your
+        // Firebase project credentials. They must match the
+        // config used in controller.html so both pages share
+        // the same Realtime Database.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVLDgx96k4PWSYZczNwzGM2oAJYCgglsw",
+            authDomain: "motion-controller-team-335.firebaseapp.com",
+            databaseURL: "https://motion-controller-team-335-default-rtdb.firebaseio.com",
+            projectId: "motion-controller-team-335",
+            storageBucket: "motion-controller-team-335.firebasestorage.app",
+            messagingSenderId: "902498362954",
+            appId: "1:902498362954:web:02178fc87f138309c1a8b3",
+            measurementId: "G-QK9LP4E5EV"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ── Database references ──────────────────────────────
+        const signalRef     = db.ref("session/signal");
+        const sensorDataRef = db.ref("session/sensorData");
+
+        // ── DOM handles ──────────────────────────────────────
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn  = document.getElementById("stopBtn");
+        const statusEl = document.getElementById("status");
+
+        // ── State ────────────────────────────────────────────
+        let running = false;
+
+        // ────────────────────────────────────────────────────
+        //  Start / Stop button handlers
+        // ────────────────────────────────────────────────────
+        // Pressing Start writes "start" to /session/signal in
+        // Firebase. The controller page listens on this path
+        // and begins collecting sensor data when it reads "start".
+        startBtn.addEventListener("click", () => {
+            signalRef.set("start");
+            running = true;
+            startBtn.disabled = true;
+            stopBtn.disabled  = false;
+            setStatus("Collecting…", "status-running");
+        });
+
+        // Pressing Stop writes "stop", which tells the
+        // controller to cease data collection.
+        stopBtn.addEventListener("click", () => {
+            signalRef.set("stop");
+            running = false;
+            startBtn.disabled = false;
+            stopBtn.disabled  = true;
+            setStatus("Stopped", "status-stopped");
+        });
+
+        // ────────────────────────────────────────────────────
+        //  Chart.js setup
+        // ────────────────────────────────────────────────────
+        // We create a line chart with six datasets (one per
+        // accelerometer axis). The chart holds a rolling window
+        // of MAX_POINTS samples so it stays readable.
+        const MAX_POINTS = 100;                // ~10 seconds at 10 Hz
+        const startTime  = Date.now();         // reference t=0
+
+        // Pre-create empty arrays for each series
+        const labels  = [];                    // time axis (seconds)
+        const datasets = {
+            ax:  [], ay:  [], az:  [],         // acceleration
+            agx: [], agy: [], agz: []          // acceleration incl. gravity
+        };
+
+        const ctx = document.getElementById("chart").getContext("2d");
+
+        const chart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    makeDataset("Accel X",   datasets.ax,  "#f87171"), // red
+                    makeDataset("Accel Y",   datasets.ay,  "#38bdf8"), // sky
+                    makeDataset("Accel Z",   datasets.az,  "#4ade80"), // green
+                    makeDataset("Grav X",    datasets.agx, "#fb923c"), // orange
+                    makeDataset("Grav Y",    datasets.agy, "#a78bfa"), // violet
+                    makeDataset("Grav Z",    datasets.agz, "#facc15"), // yellow
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: false,              // disable animation for smooth live updates
+                scales: {
+                    x: {
+                        title: { display: true, text: "Time (s)", color: "#94a3b8" },
+                        ticks: { color: "#64748b", maxTicksLimit: 10 },
+                        grid:  { color: "#1e293b" }
+                    },
+                    y: {
+                        title: { display: true, text: "Acceleration (m/s²)", color: "#94a3b8" },
+                        ticks: { color: "#64748b" },
+                        grid:  { color: "#1e293b" }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: "#e2e8f0", usePointStyle: true, pointStyle: "line" }
+                    }
+                }
+            }
+        });
+
+        /**
+         * Helper to create a Chart.js dataset configuration.
+         * Each line has no point markers and a 2 px stroke for clarity.
+         */
+        function makeDataset(label, data, color) {
+            return {
+                label,
+                data,
+                borderColor: color,
+                backgroundColor: color,
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.25               // slight curve smoothing
+            };
+        }
+
+        // ────────────────────────────────────────────────────
+        //  Listen for incoming sensor data from controller
+        // ────────────────────────────────────────────────────
+        // Firebase .on("value") fires every time the controller
+        // overwrites /session/sensorData with a new reading.
+        sensorDataRef.on("value", (snapshot) => {
+            const data = snapshot.val();
+            if (!data || !running) return;
+
+            const a  = data.acceleration               || {};
+            const ag = data.accelerationIncludingGravity || {};
+
+            // ── Update the numeric display cards ─────────────
+            document.getElementById("ax").textContent  = fmt(a.x);
+            document.getElementById("ay").textContent  = fmt(a.y);
+            document.getElementById("az").textContent  = fmt(a.z);
+            document.getElementById("agx").textContent = fmt(ag.x);
+            document.getElementById("agy").textContent = fmt(ag.y);
+            document.getElementById("agz").textContent = fmt(ag.z);
+
+            // ── Push data into the chart arrays ──────────────
+            // Time label is seconds since the main page loaded.
+            const t = ((data.timestamp || Date.now()) - startTime) / 1000;
+            labels.push(t.toFixed(1));
+
+            datasets.ax.push(a.x   ?? 0);
+            datasets.ay.push(a.y   ?? 0);
+            datasets.az.push(a.z   ?? 0);
+            datasets.agx.push(ag.x ?? 0);
+            datasets.agy.push(ag.y ?? 0);
+            datasets.agz.push(ag.z ?? 0);
+
+            // Trim arrays to the rolling window size.
+            if (labels.length > MAX_POINTS) {
+                labels.shift();
+                for (const key in datasets) datasets[key].shift();
+            }
+
+            // Re-render the chart with the new data.
+            chart.update();
+        });
+
+        // ────────────────────────────────────────────────────
+        //  Helper functions
+        // ────────────────────────────────────────────────────
+
+        /** Format a number to 4 decimal places for display. */
+        function fmt(v) {
+            return v != null ? Number(v).toFixed(4) : "—";
+        }
+
+        /** Set the status badge text and CSS class. */
+        function setStatus(text, cls) {
+            statusEl.textContent = text;
+            statusEl.className   = cls;
+        }
+
+        // ────────────────────────────────────────────────────
+        //  Initialise signal to a known state on page load
+        // ────────────────────────────────────────────────────
+        // Write "stop" so any previously-running controller
+        // will cease sending data when this page refreshes.
+        signalRef.set("stop");
+    </script>
+</body>
+</html>

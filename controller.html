@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--
+        viewport meta tag is essential for mobile devices so the page scales
+        correctly and doesn't require pinch-to-zoom.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Controller</title>
+
+    <!--
+        ============================================================
+        THIRD-PARTY LIBRARY: Firebase JS SDK v10 (compat build)
+        ============================================================
+        We use the "compat" variant of Firebase so we can use the
+        classic namespaced API (firebase.database()) directly in a
+        plain HTML file without a bundler or build step.
+        - firebase-app-compat.js  : Core Firebase initialisation
+        - firebase-database-compat.js : Realtime Database client
+    -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ── Reset & base ─────────────────────────────────── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* ── Status badge ─────────────────────────────────── */
+        #status {
+            font-size: 0.95rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .status-idle       { background: #334155; color: #94a3b8; }
+        .status-ready      { background: #1e3a5f; color: #38bdf8; }
+        .status-collecting  { background: #14532d; color: #4ade80; }
+        .status-stopped    { background: #7f1d1d; color: #fca5a5; }
+
+        /* ── Enable-sensors button ────────────────────────── */
+        #enableBtn {
+            padding: 0.9rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+            margin-bottom: 1.25rem;
+            transition: background 0.2s;
+        }
+        #enableBtn:active { background: #1d4ed8; }
+        #enableBtn:disabled {
+            background: #475569;
+            color: #94a3b8;
+            cursor: default;
+        }
+
+        /* ── Live data panel ──────────────────────────────── */
+        #dataPanel {
+            width: 100%;
+            max-width: 420px;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        #dataPanel h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.6rem;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.85rem;
+        }
+        .data-label { color: #94a3b8; }
+        .data-value { color: #f1f5f9; }
+
+        /* ── Scrolling log ────────────────────────────────── */
+        #log {
+            width: 100%;
+            max-width: 420px;
+            flex: 1;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 0.75rem;
+            overflow-y: auto;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.72rem;
+            line-height: 1.45;
+            color: #94a3b8;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Controller (Mobile)</h1>
+
+    <!-- Status badge – changes text & colour as state transitions -->
+    <div id="status" class="status-idle">Sensor not enabled</div>
+
+    <!--
+        Enable-sensors button.
+        On iOS 13+ DeviceMotionEvent.requestPermission() MUST be called
+        inside a user-gesture handler (tap / click). This button satisfies
+        that requirement. On Android / desktop the permission API doesn't
+        exist, so we just skip straight to "ready".
+    -->
+    <button id="enableBtn">Enable Sensors</button>
+
+    <!-- Live readout of the most recent sample sent to Firebase -->
+    <div id="dataPanel">
+        <h2>Latest Reading</h2>
+        <div class="data-row"><span class="data-label">accel x</span><span class="data-value" id="ax">—</span></div>
+        <div class="data-row"><span class="data-label">accel y</span><span class="data-value" id="ay">—</span></div>
+        <div class="data-row"><span class="data-label">accel z</span><span class="data-value" id="az">—</span></div>
+        <div class="data-row"><span class="data-label">gravity x</span><span class="data-value" id="agx">—</span></div>
+        <div class="data-row"><span class="data-label">gravity y</span><span class="data-value" id="agy">—</span></div>
+        <div class="data-row"><span class="data-label">gravity z</span><span class="data-value" id="agz">—</span></div>
+    </div>
+
+    <!-- Scrolling console-style log of every packet sent -->
+    <div id="log"></div>
+
+    <script>
+        // ────────────────────────────────────────────────────
+        //  Firebase configuration
+        // ────────────────────────────────────────────────────
+        // TODO: Replace these placeholder values with your own
+        // Firebase project credentials. You can find them in
+        // the Firebase Console → Project Settings → General →
+        // "Your apps" → Web app config snippet.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVLDgx96k4PWSYZczNwzGM2oAJYCgglsw",
+            authDomain: "motion-controller-team-335.firebaseapp.com",
+            databaseURL: "https://motion-controller-team-335-default-rtdb.firebaseio.com",
+            projectId: "motion-controller-team-335",
+            storageBucket: "motion-controller-team-335.firebasestorage.app",
+            messagingSenderId: "902498362954",
+            appId: "1:902498362954:web:02178fc87f138309c1a8b3",
+            measurementId: "G-QK9LP4E5EV"
+        };
+
+        // Initialise the Firebase app and get a reference to the
+        // Realtime Database.
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ── Database references ──────────────────────────────
+        // /session/signal   – "start" | "stop"  (written by main.html)
+        // /session/sensorData – latest accelerometer sample (written here)
+        const signalRef     = db.ref("session/signal");
+        const sensorDataRef = db.ref("session/sensorData");
+
+        // ── DOM handles ──────────────────────────────────────
+        const statusEl   = document.getElementById("status");
+        const enableBtn  = document.getElementById("enableBtn");
+        const logEl      = document.getElementById("log");
+        const fields     = { ax: "ax", ay: "ay", az: "az", agx: "agx", agy: "agy", agz: "agz" };
+
+        // ── State ────────────────────────────────────────────
+        let sensorPermissionGranted = false; // true after user taps Enable
+        let collecting              = false; // true between start / stop signals
+        let lastSendTime            = 0;     // timestamp of last Firebase write
+        const SEND_INTERVAL_MS      = 100;   // throttle: send at most 10 Hz
+
+        // ────────────────────────────────────────────────────
+        //  Enable-sensors button handler
+        // ────────────────────────────────────────────────────
+        // Handles the iOS 13+ requirement that requestPermission()
+        // must be called from a user gesture. On platforms that
+        // don't expose requestPermission we skip straight ahead.
+        enableBtn.addEventListener("click", async () => {
+            try {
+                if (typeof DeviceMotionEvent.requestPermission === "function") {
+                    const permission = await DeviceMotionEvent.requestPermission();
+                    if (permission !== "granted") {
+                        setStatus("Permission denied – please allow motion access", "status-stopped");
+                        return;
+                    }
+                }
+            } catch (err) {
+                setStatus("Permission error: " + err.message, "status-stopped");
+                return;
+            }
+
+            sensorPermissionGranted = true;
+            enableBtn.disabled = true;
+            enableBtn.textContent = "Sensors Enabled ✓";
+            setStatus("Waiting for start signal…", "status-ready");
+            appendLog("Sensor permission granted. Waiting for main page signal.");
+        });
+
+        // ────────────────────────────────────────────────────
+        //  Listen for start / stop signals from main.html
+        // ────────────────────────────────────────────────────
+        // Firebase .on("value") fires once immediately with the
+        // current value, then again every time it changes.
+        signalRef.on("value", (snapshot) => {
+            const signal = snapshot.val();
+
+            if (signal === "start" && sensorPermissionGranted && !collecting) {
+                startCollecting();
+            } else if (signal === "stop" && collecting) {
+                stopCollecting();
+            } else if (signal === "start" && !sensorPermissionGranted) {
+                setStatus("Tap 'Enable Sensors' first!", "status-idle");
+            }
+        });
+
+        // ────────────────────────────────────────────────────
+        //  Accelerometer collection
+        // ────────────────────────────────────────────────────
+
+        /**
+         * Begin listening to DeviceMotionEvent and streaming
+         * sensor data to Firebase at ~10 Hz.
+         */
+        function startCollecting() {
+            collecting = true;
+            setStatus("Collecting data…", "status-collecting");
+            appendLog("▶ Started collecting sensor data.");
+
+            window.addEventListener("devicemotion", onDeviceMotion);
+        }
+
+        /**
+         * Stop listening and clear the sensor data node so the
+         * main page knows collection has ended.
+         */
+        function stopCollecting() {
+            collecting = false;
+            window.removeEventListener("devicemotion", onDeviceMotion);
+            setStatus("Stopped – waiting for start signal…", "status-ready");
+            appendLog("■ Stopped collecting.");
+        }
+
+        /**
+         * DeviceMotionEvent handler.
+         * Throttled so we only write to Firebase at most once
+         * every SEND_INTERVAL_MS (100 ms → 10 samples/sec).
+         * This keeps the database writes manageable while still
+         * providing smooth real-time data on the main page.
+         */
+        function onDeviceMotion(event) {
+            const now = Date.now();
+            if (now - lastSendTime < SEND_INTERVAL_MS) return;
+            lastSendTime = now;
+
+            // DeviceMotionEvent exposes two acceleration objects:
+            //   acceleration               – device acceleration excluding gravity
+            //   accelerationIncludingGravity – device acceleration including gravity
+            const a  = event.acceleration              || { x: 0, y: 0, z: 0 };
+            const ag = event.accelerationIncludingGravity || { x: 0, y: 0, z: 0 };
+
+            const payload = {
+                acceleration: {
+                    x: round(a.x),
+                    y: round(a.y),
+                    z: round(a.z)
+                },
+                accelerationIncludingGravity: {
+                    x: round(ag.x),
+                    y: round(ag.y),
+                    z: round(ag.z)
+                },
+                timestamp: now
+            };
+
+            // Write to Firebase (overwrites previous sample so
+            // there is only ever one "latest" reading stored).
+            sensorDataRef.set(payload);
+
+            // Update the on-screen data panel
+            updateDataPanel(payload);
+
+            // Print to the scrolling log as requested
+            const msg = `CONTROLLER DATA SENT: accel(${payload.acceleration.x}, ${payload.acceleration.y}, ${payload.acceleration.z}) ` +
+                        `gravity(${payload.accelerationIncludingGravity.x}, ${payload.accelerationIncludingGravity.y}, ${payload.accelerationIncludingGravity.z})`;
+            appendLog(msg);
+        }
+
+        // ────────────────────────────────────────────────────
+        //  Helper functions
+        // ────────────────────────────────────────────────────
+
+        /** Round a value to 4 decimal places (or return 0 if null). */
+        function round(v) {
+            return v != null ? Math.round(v * 10000) / 10000 : 0;
+        }
+
+        /** Update the live data panel with the latest payload. */
+        function updateDataPanel(p) {
+            document.getElementById("ax").textContent  = p.acceleration.x;
+            document.getElementById("ay").textContent  = p.acceleration.y;
+            document.getElementById("az").textContent  = p.acceleration.z;
+            document.getElementById("agx").textContent = p.accelerationIncludingGravity.x;
+            document.getElementById("agy").textContent = p.accelerationIncludingGravity.y;
+            document.getElementById("agz").textContent = p.accelerationIncludingGravity.z;
+        }
+
+        /** Set the status badge text and CSS class. */
+        function setStatus(text, cls) {
+            statusEl.textContent = text;
+            statusEl.className   = cls;
+        }
+
+        /**
+         * Append a timestamped line to the scrolling log
+         * and auto-scroll to the bottom.
+         */
+        function appendLog(msg) {
+            const time = new Date().toLocaleTimeString();
+            logEl.textContent += `[${time}] ${msg}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(msg);
+        }
+    </script>
+</body>
+</html>
