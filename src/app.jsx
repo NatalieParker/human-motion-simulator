@@ -136,7 +136,10 @@ export function App() {
 
   return (
     <div class="container">
-      <h1>Human Motion Simulator</h1>
+      <div class="top-bar">
+        <h1>Human Motion Simulator</h1>
+        <a class="btn btn--secondary" href="sandbox.html">Sandbox Mode</a>
+      </div>
 
       <div style={{ display: gameState === "challenge" ? "none" : "block" }}>
         <GameCanvas motion={motion} matchScore={matchScore} gameState={gameState} />

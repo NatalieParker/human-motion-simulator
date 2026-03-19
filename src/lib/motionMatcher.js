@@ -50,3 +50,17 @@ function scoreFeature(live, ref, relTolerance) {
   const diff = Math.abs(live - ref);
   return Math.max(0, 1 - diff / tolerance);
 }
+
+export function classifyLocalMotion(dataWindow) {
+  const mags = dataWindow.map((d) =>
+    Math.sqrt(d.x ** 2 + d.y ** 2 + d.z ** 2)
+  );
+  const { rms, peakRate, peakAmp, maxPeak } = extractFeaturesFromMagnitudes(mags);
+
+  if (rms < 0.8) return { detected: false, motion: "stationary" };
+  if (peakRate >= 2.5 && peakAmp > 3) return { detected: true, motion: "running" };
+  if (peakRate >= 1.3 && peakRate < 2.5) return { detected: true, motion: "walking" };
+  if (peakRate < 1.3 && maxPeak > 8) return { detected: true, motion: "jumping" };
+  if (peakRate >= 1.0 && peakRate < 1.5 && peakAmp > 2) return { detected: true, motion: "stairs" };
+  return { detected: true, motion: "unknown" };
+}

@@ -1,25 +1,22 @@
-import { useState, useEffect, useRef, useCallback } from "preact/hooks";
+import { useState, useEffect, useRef } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
-import { analyzeMotion } from "../lib/gemini";
+import { classifyLocalMotion } from "../lib/motionMatcher";
 import { captureSnapshot } from "../lib/chartSnapshot";
 import { LiveChart } from "../components/LiveChart/LiveChart";
 import { PatternCard } from "../components/PatternCard/PatternCard";
 import "../styles/sandbox.css";
 
-const ANALYSIS_INTERVAL_MS = 4000;
-const ANALYSIS_WINDOW = 30;
+const DETECTION_INTERVAL_MS = 4000;
+const DETECTION_WINDOW = 30;
 
 export function SandboxPage() {
   const [running, setRunning] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
   const [sensorData, setSensorData] = useState(null);
   const [patterns, setPatterns] = useState([]);
-  const [error, setError] = useState(null);
 
   const startTimeRef = useRef(Date.now());
   const dataBufferRef = useRef([]);
-  const lastAnalysisRef = useRef(0);
-  const analyzingRef = useRef(false);
+  const lastCheckRef = useRef(0);
   const chartKeyRef = useRef(0);
 
   useEffect(() => {
@@ -32,29 +29,6 @@ export function SandboxPage() {
       if (data) setSensorData(data);
     });
     return () => unsubscribe();
-  }, []);
-
-  const runAnalysis = useCallback(async (window) => {
-    analyzingRef.current = true;
-    setAnalyzing(true);
-    setError(null);
-
-    try {
-      const result = await analyzeMotion(window);
-      if (result.detected && result.motion !== "stationary") {
-        const snapshot = captureSnapshot(window);
-        setPatterns((prev) => [
-          { ...result, snapshot, timestamp: Date.now() },
-          ...prev,
-        ]);
-      }
-    } catch (err) {
-      console.error("Gemini analysis failed:", err);
-      setError(err.message || "Analysis failed");
-    }
-
-    analyzingRef.current = false;
-    setAnalyzing(false);
   }, []);
 
   useEffect(() => {
@@ -74,24 +48,35 @@ export function SandboxPage() {
 
     const now = Date.now();
     if (
-      now - lastAnalysisRef.current >= ANALYSIS_INTERVAL_MS &&
-      !analyzingRef.current &&
-      dataBufferRef.current.length >= ANALYSIS_WINDOW
+      now - lastCheckRef.current >= DETECTION_INTERVAL_MS &&
+      dataBufferRef.current.length >= DETECTION_WINDOW
     ) {
-      lastAnalysisRef.current = now;
-      const slice = dataBufferRef.current.slice(-ANALYSIS_WINDOW);
-      runAnalysis(slice);
+      lastCheckRef.current = now;
+      const slice = dataBufferRef.current.slice(-DETECTION_WINDOW);
+      const result = classifyLocalMotion(slice);
+
+      if (result.detected && result.motion !== "stationary") {
+        const snapshot = captureSnapshot(slice);
+        setPatterns((prev) => [
+          {
+            localMotion: result.motion,
+            snapshot,
+            timestamp: Date.now(),
+            dataWindow: slice,
+          },
+          ...prev,
+        ]);
+      }
     }
-  }, [sensorData, running, runAnalysis]);
+  }, [sensorData, running]);
 
   function handleStart() {
     set(signalRef, "start");
     setRunning(true);
     startTimeRef.current = Date.now();
     dataBufferRef.current = [];
-    lastAnalysisRef.current = 0;
+    lastCheckRef.current = 0;
     chartKeyRef.current++;
-    setError(null);
   }
 
   function handleStop() {
@@ -105,7 +90,10 @@ export function SandboxPage() {
 
   return (
     <div class="sandbox">
-      <h1>Sandbox Mode</h1>
+      <div class="sandbox__top-bar">
+        <h1>Sandbox Mode</h1>
+        <a class="btn btn--secondary" href="./">Main Game</a>
+      </div>
 
       <div class="sandbox__controls">
         {!running ? (
@@ -117,8 +105,6 @@ export function SandboxPage() {
             Stop
           </button>
         )}
-        {analyzing && <span class="sandbox__analyzing">Analyzing...</span>}
-        {error && <span class="sandbox__error">{error}</span>}
       </div>
 
       <LiveChart

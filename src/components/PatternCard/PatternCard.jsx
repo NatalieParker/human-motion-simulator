@@ -1,3 +1,5 @@
+import { useState } from "preact/hooks";
+import { analyzeMotion } from "../../lib/gemini";
 import "./PatternCard.css";
 
 const MOTION_COLORS = {
@@ -10,30 +12,114 @@ const MOTION_COLORS = {
 };
 
 export function PatternCard({ pattern }) {
-  const color = MOTION_COLORS[pattern.motion] || MOTION_COLORS.unknown;
+  const [expanded, setExpanded] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  const color = MOTION_COLORS[pattern.localMotion] || MOTION_COLORS.unknown;
   const time = new Date(pattern.timestamp).toLocaleTimeString();
-  const pct = Math.round(pattern.confidence * 100);
+
+  async function handleClick() {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+
+    setExpanded(true);
+
+    if (aiResult || aiLoading) return;
+
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const result = await analyzeMotion(pattern.dataWindow);
+      setAiResult(result);
+    } catch (err) {
+      console.error("Gemini analysis failed:", err);
+      setAiError(err.message || "Analysis failed");
+    }
+    setAiLoading(false);
+  }
+
+  async function handleRetry() {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const result = await analyzeMotion(pattern.dataWindow);
+      setAiResult(result);
+    } catch (err) {
+      console.error("Gemini analysis failed:", err);
+      setAiError(err.message || "Analysis failed");
+    }
+    setAiLoading(false);
+  }
+
+  const aiColor = aiResult
+    ? MOTION_COLORS[aiResult.motion] || MOTION_COLORS.unknown
+    : null;
 
   return (
-    <div class="pattern-card">
+    <div
+      class={`pattern-card ${expanded ? "pattern-card--expanded" : ""}`}
+      onClick={handleClick}
+    >
       <div class="pattern-card__header">
         <span class="pattern-card__badge" style={{ background: color }}>
-          {pattern.motion}
+          {pattern.localMotion}
         </span>
-        <span class="pattern-card__confidence" style={{ color }}>
-          {pct}%
-        </span>
+        <span class="pattern-card__label">Local estimate</span>
         <span class="pattern-card__time">{time}</span>
       </div>
+
       {pattern.snapshot && (
         <img
           class="pattern-card__snapshot"
           src={pattern.snapshot}
-          alt={`${pattern.motion} pattern`}
+          alt={`${pattern.localMotion} pattern`}
         />
       )}
-      {pattern.description && (
-        <p class="pattern-card__desc">{pattern.description}</p>
+
+      {!expanded && (
+        <p class="pattern-card__hint">Click for AI analysis</p>
+      )}
+
+      {expanded && (
+        <div class="pattern-card__ai" onClick={(e) => e.stopPropagation()}>
+          {aiLoading && (
+            <p class="pattern-card__ai-loading">Analyzing with Gemini...</p>
+          )}
+          {aiError && (
+            <div class="pattern-card__ai-error">
+              <p>{aiError}</p>
+              <button class="pattern-card__retry-btn" onClick={handleRetry}>
+                Retry
+              </button>
+            </div>
+          )}
+          {aiResult && (
+            <div class="pattern-card__ai-result">
+              <div class="pattern-card__ai-header">
+                <span
+                  class="pattern-card__badge"
+                  style={{ background: aiColor }}
+                >
+                  {aiResult.motion}
+                </span>
+                <span
+                  class="pattern-card__confidence"
+                  style={{ color: aiColor }}
+                >
+                  {Math.round(aiResult.confidence * 100)}%
+                </span>
+                <span class="pattern-card__ai-label">Gemini</span>
+              </div>
+              {aiResult.description && (
+                <p class="pattern-card__desc">{aiResult.description}</p>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
