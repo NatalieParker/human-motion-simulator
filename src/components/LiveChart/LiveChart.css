@@ -1,0 +1,23 @@
+.live-chart {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.live-chart h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.live-chart__canvas-wrap {
+  position: relative;
+  height: 250px;
+}
+
+.live-chart__canvas-wrap canvas {
+  width: 100% !important;
+}

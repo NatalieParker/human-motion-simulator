@@ -1,0 +1,88 @@
+.controller {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  min-height: 100vh;
+}
+
+.controller h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.controller__status {
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.controller__enable-btn {
+  padding: 0.9rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+  margin-bottom: 1.25rem;
+  transition: background 0.2s;
+}
+
+.controller__enable-btn:active {
+  background: #1d4ed8;
+}
+
+.controller__enable-btn:disabled {
+  background: #475569;
+  color: #94a3b8;
+  cursor: default;
+}
+
+.controller__data-panel {
+  width: 100%;
+  max-width: 420px;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.controller__data-panel h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.6rem;
+}
+
+.controller__data-panel .data-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+}
+
+.controller__data-panel .data-row__label {
+  color: #94a3b8;
+}
+
+.controller__data-panel .data-row__value {
+  color: #f1f5f9;
+}
+
+.controller__log {
+  width: 100%;
+  max-width: 420px;
+  flex: 1;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 0.75rem;
+  overflow-y: auto;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  max-height: 300px;
+}

@@ -1,0 +1,53 @@
+.match-meter {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.match-meter__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.match-meter__header h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.match-meter__value {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.match-meter__track {
+  height: 8px;
+  background: #0f172a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.match-meter__fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease-out, background 0.3s ease;
+}
+
+.match-meter__success {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #4ade80;
+  margin-top: 0.75rem;
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}

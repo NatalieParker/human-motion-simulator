@@ -1,0 +1,50 @@
+.pattern-card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pattern-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pattern-card__badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0f172a;
+}
+
+.pattern-card__confidence {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pattern-card__time {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.pattern-card__snapshot {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  background: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.pattern-card__desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
