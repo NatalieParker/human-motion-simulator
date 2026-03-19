@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
+  base: "/human-motion-simulator/",
   plugins: [preact()],
   resolve: {
     alias: {
