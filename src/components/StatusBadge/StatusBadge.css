@@ -1,0 +1,28 @@
+.status-badge {
+  display: inline-block;
+  font-size: 0.9rem;
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.status-idle {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.status-ready {
+  background: #1e3a5f;
+  color: #38bdf8;
+}
+
+.status-running,
+.status-collecting {
+  background: #14532d;
+  color: #4ade80;
+}
+
+.status-stopped {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
