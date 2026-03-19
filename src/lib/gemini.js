@@ -19,7 +19,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 export async function analyzeMotion(dataWindow) {
   if (!API_KEY) throw new Error("VITE_GEMINI_API_KEY is not set in .env");
   const genAI = new GoogleGenerativeAI(API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const formatted = dataWindow.map((d) =>
     `x:${d.x.toFixed(3)} y:${d.y.toFixed(3)} z:${d.z.toFixed(3)}`
