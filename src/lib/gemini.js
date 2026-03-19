@@ -11,6 +11,8 @@ Respond ONLY with a JSON object in this exact format (no markdown, no code fence
 Valid motion values: "walking", "running", "jumping", "stairs", "stationary", "unknown"
 Set detected to false if no clear motion pattern is present.
 
+Start your response with "This motion looks like [motion] with [confidence] confidence." and then continue with the description.
+
 Data:
 `;
 
@@ -19,7 +21,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 export async function analyzeMotion(dataWindow) {
   if (!API_KEY) throw new Error("VITE_GEMINI_API_KEY is not set in .env");
   const genAI = new GoogleGenerativeAI(API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const formatted = dataWindow.map((d) =>
     `x:${d.x.toFixed(3)} y:${d.y.toFixed(3)} z:${d.z.toFixed(3)}`

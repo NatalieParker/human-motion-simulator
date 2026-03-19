@@ -1,0 +1,43 @@
+.rhythm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.rhythm__pulse {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #475569;
+  background: transparent;
+  margin-bottom: 1.5rem;
+  transition: transform 0.08s, background 0.08s, border-color 0.08s;
+}
+
+.rhythm__pulse--on {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  transform: scale(1.15);
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
+}
+
+.rhythm__bpm {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  font-family: "SF Mono", "Fira Code", monospace;
+  margin-bottom: 0.25rem;
+}
+
+.rhythm__count {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.rhythm__hits {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4ade80;
+}
