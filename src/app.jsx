@@ -10,10 +10,13 @@ import { GameCanvas } from "./components/GameCanvas/GameCanvas";
 import { MatchMeter } from "./components/MatchMeter/MatchMeter";
 import { ReferenceChart } from "./components/ReferenceChart/ReferenceChart";
 import { LiveChart } from "./components/LiveChart/LiveChart";
+import { ChallengeOverlay } from "./components/ChallengeOverlay/ChallengeOverlay";
 import "./styles/dashboard.css";
 
 const MATCH_THRESHOLD = 0.55;
 const SUSTAINED_FRAMES = 20;
+const CHALLENGE_CHANCE = 0.6;
+const CHALLENGE_TYPES = ["stillness", "rhythm", "accuracy"];
 
 export function App() {
   const [motion, setMotion] = useState(() => randomMotion());
@@ -22,6 +25,7 @@ export function App() {
   const [matchScore, setMatchScore] = useState(0);
   const [sensorData, setSensorData] = useState(null);
   const [gameKey, setGameKey] = useState(0);
+  const [challengeType, setChallengeType] = useState(null);
 
   const startTimeRef = useRef(Date.now());
   const liveBufferRef = useRef([]);
@@ -95,6 +99,18 @@ export function App() {
     smoothedScoreRef.current = 0;
   }
 
+  useEffect(() => {
+    if (gameState !== "matched") return;
+    const timer = setTimeout(() => {
+      if (Math.random() < CHALLENGE_CHANCE) {
+        const type = CHALLENGE_TYPES[Math.floor(Math.random() * CHALLENGE_TYPES.length)];
+        setChallengeType(type);
+        setGameState("challenge");
+      }
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [gameState]);
+
   function handleNewMotion() {
     set(signalRef, "stop");
     const next = randomMotion();
@@ -102,51 +118,76 @@ export function App() {
     setReferencePattern(generatePattern(next));
     setGameState("idle");
     setMatchScore(0);
+    setChallengeType(null);
     liveBufferRef.current = [];
     matchCountRef.current = 0;
     smoothedScoreRef.current = 0;
     setGameKey((k) => k + 1);
   }
 
+  function handleChallengeComplete() {
+    handleNewMotion();
+  }
+
+  function handleChallengeSkip() {
+    set(signalRef, "stop");
+    handleNewMotion();
+  }
+
   return (
     <div class="container">
       <h1>Human Motion Simulator</h1>
 
-      <GameCanvas motion={motion} matchScore={matchScore} gameState={gameState} />
+      <div style={{ display: gameState === "challenge" ? "none" : "block" }}>
+        <GameCanvas motion={motion} matchScore={matchScore} gameState={gameState} />
 
-      <MatchMeter score={matchScore} gameState={gameState} />
+        <MatchMeter score={matchScore} gameState={gameState} />
 
-      <ReferenceChart pattern={referencePattern} motion={motion} />
+        <ReferenceChart pattern={referencePattern} motion={motion} />
 
-      <LiveChart
-        key={gameKey}
-        sensorData={sensorData}
-        running={gameState === "running"}
-        startTime={startTimeRef.current}
-      />
+        <LiveChart
+          key={gameKey}
+          sensorData={sensorData}
+          running={gameState === "running"}
+          startTime={startTimeRef.current}
+        />
 
-      <div class="game-controls">
-        {gameState === "idle" && (
-          <>
-            <button class="btn btn--start" onClick={handleStart}>
-              Start
+        <div class="game-controls">
+          {gameState === "idle" && (
+            <>
+              <button class="btn btn--start" onClick={handleStart}>
+                Start
+              </button>
+              <button class="btn btn--secondary" onClick={handleNewMotion}>
+                New Motion
+              </button>
+            </>
+          )}
+          {gameState === "running" && (
+            <button class="btn btn--stop" onClick={handleStop}>
+              Stop
             </button>
-            <button class="btn btn--secondary" onClick={handleNewMotion}>
-              New Motion
+          )}
+          {gameState === "matched" && (
+            <button class="btn btn--start" onClick={handleNewMotion}>
+              Play Again
             </button>
-          </>
-        )}
-        {gameState === "running" && (
-          <button class="btn btn--stop" onClick={handleStop}>
-            Stop
-          </button>
-        )}
-        {gameState === "matched" && (
-          <button class="btn btn--start" onClick={handleNewMotion}>
-            Play Again
-          </button>
-        )}
+          )}
+        </div>
       </div>
+
+      {gameState === "challenge" && (
+        <ChallengeOverlay
+          type={challengeType}
+          sensorData={sensorData}
+          referencePattern={referencePattern}
+          motion={motion}
+          onComplete={handleChallengeComplete}
+          onSkip={handleChallengeSkip}
+          onStart={() => set(signalRef, "start")}
+          onStop={() => set(signalRef, "stop")}
+        />
+      )}
     </div>
   );
 }
