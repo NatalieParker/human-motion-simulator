@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "preact/hooks";
+import { useState, useEffect, useRef, useMemo } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
 import { classifyLocalMotion } from "../lib/motionMatcher";
 import { captureSnapshot } from "../lib/chartSnapshot";
@@ -13,6 +13,10 @@ export function SandboxPage() {
   const [running, setRunning] = useState(false);
   const [sensorData, setSensorData] = useState(null);
   const [patterns, setPatterns] = useState([]);
+  const [sessionSamples, setSessionSamples] = useState([]);
+  const [snippetStart, setSnippetStart] = useState(0);
+  const [previewSnapshot, setPreviewSnapshot] = useState("");
+  const [isPinnedScrub, setIsPinnedScrub] = useState(false);
 
   const startTimeRef = useRef(Date.now());
   const dataBufferRef = useRef([]);
@@ -40,6 +44,23 @@ export function SandboxPage() {
       y: a.y || 0,
       z: a.z || 0,
       t: sensorData.timestamp || Date.now(),
+    });
+    setSessionSamples((prev) => {
+      const next = [
+        ...prev,
+        {
+          x: a.x || 0,
+          y: a.y || 0,
+          z: a.z || 0,
+          t: sensorData.timestamp || Date.now(),
+        },
+      ];
+      const clipped = next.slice(-600);
+      if (!isPinnedScrub) {
+        const maxStart = Math.max(0, clipped.length - DETECTION_WINDOW);
+        setSnippetStart(maxStart);
+      }
+      return clipped;
     });
 
     if (dataBufferRef.current.length > 200) {
@@ -70,11 +91,31 @@ export function SandboxPage() {
     }
   }, [sensorData, running]);
 
+  const selectedWindow = useMemo(
+    () => sessionSamples.slice(snippetStart, snippetStart + DETECTION_WINDOW),
+    [sessionSamples, snippetStart]
+  );
+
+  useEffect(() => {
+    if (selectedWindow.length < DETECTION_WINDOW) {
+      setPreviewSnapshot("");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setPreviewSnapshot(captureSnapshot(selectedWindow));
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [selectedWindow]);
+
   function handleStart() {
     set(signalRef, "start");
     setRunning(true);
     startTimeRef.current = Date.now();
     dataBufferRef.current = [];
+    setSessionSamples([]);
+    setSnippetStart(0);
+    setPreviewSnapshot("");
+    setIsPinnedScrub(false);
     lastCheckRef.current = 0;
     chartKeyRef.current++;
   }
@@ -88,11 +129,33 @@ export function SandboxPage() {
     setPatterns([]);
   }
 
+  function handleSnippetStartChange(e) {
+    setSnippetStart(Number(e.target.value));
+    setIsPinnedScrub(true);
+  }
+
+  function handleGrabSnippet() {
+    if (selectedWindow.length < DETECTION_WINDOW) return;
+    const result = classifyLocalMotion(selectedWindow);
+    const estimatedMotion =
+      result.detected && result.motion !== "stationary" ? result.motion : "unknown";
+    const snapshot = previewSnapshot || captureSnapshot(selectedWindow);
+    setPatterns((prev) => [
+      {
+        localMotion: estimatedMotion,
+        snapshot,
+        timestamp: Date.now(),
+        dataWindow: selectedWindow,
+      },
+      ...prev,
+    ]);
+  }
+
   return (
     <div class="sandbox">
       <div class="sandbox__top-bar">
         <h1>Sandbox Mode</h1>
-        <a class="btn btn--secondary" href="./">Main Game</a>
+        <a class="btn btn--secondary" href="./">Main Menu</a>
       </div>
 
       <div class="sandbox__controls">
@@ -113,6 +176,50 @@ export function SandboxPage() {
         running={running}
         startTime={startTimeRef.current}
       />
+
+      <div class="sandbox__scrubber">
+        <h2>Snippet Scrubber</h2>
+        <p class="sandbox__scrubber-help">
+          Scroll through recorded graph data, choose a segment, and tag it with your own
+          motion estimate.
+        </p>
+        <input
+          class="sandbox__slider"
+          type="range"
+          min="0"
+          max={Math.max(0, sessionSamples.length - DETECTION_WINDOW)}
+          value={snippetStart}
+          onInput={handleSnippetStartChange}
+          disabled={sessionSamples.length < DETECTION_WINDOW}
+        />
+        <div class="sandbox__scrubber-meta">
+          <span>
+            Window: {selectedWindow.length > 0 ? snippetStart : 0} -{" "}
+            {selectedWindow.length > 0 ? snippetStart + selectedWindow.length - 1 : 0}
+          </span>
+          <span>Total samples: {sessionSamples.length}</span>
+        </div>
+        <div class="sandbox__scrubber-actions">
+          <button
+            class="btn btn--start"
+            onClick={handleGrabSnippet}
+            disabled={selectedWindow.length < DETECTION_WINDOW}
+          >
+            Grab Snippet
+          </button>
+        </div>
+        {previewSnapshot ? (
+          <img
+            class="sandbox__preview"
+            src={previewSnapshot}
+            alt="Selected snippet preview"
+          />
+        ) : (
+          <div class="sandbox__preview-empty">
+            Record more data to enable snippet preview.
+          </div>
+        )}
+      </div>
 
       <div class="sandbox__patterns-header">
         <h2>Detected Patterns</h2>

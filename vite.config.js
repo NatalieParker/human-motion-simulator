@@ -17,6 +17,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        train: resolve(__dirname, "train.html"),
         controller: resolve(__dirname, "controller.html"),
         sandbox: resolve(__dirname, "sandbox.html"),
       },
