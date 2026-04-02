@@ -2,11 +2,14 @@ import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import { resolve } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const require = createRequire(import.meta.url);
+const gameData = require("./data/game.json");
 
 export default defineConfig({
-  base: "/human-motion-simulator/",
+  base: `/staticGames/${gameData["game-id"]}/`,
   plugins: [preact()],
   resolve: {
     alias: {
