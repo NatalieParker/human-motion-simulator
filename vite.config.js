@@ -9,6 +9,8 @@ const require = createRequire(import.meta.url);
 const gameData = require("./data/game.json");
 
 export default defineConfig({
+  // Read .env values from the parent portal repository.
+  envDir: resolve(__dirname, "../.."),
   base: `/staticGames/${gameData["game-id"]}/`,
   plugins: [preact()],
   resolve: {
