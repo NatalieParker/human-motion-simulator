@@ -1,4 +1,5 @@
 import "./Home.css";
+import { QrFooter } from "../components/QrFooter/QrFooter";
 
 export function HomePage() {
   return (
@@ -16,6 +17,7 @@ export function HomePage() {
           <span class="home-card__desc">Try free-form accelerometer exploration</span>
         </a>
       </section>
+      <QrFooter />
     </main>
   );
 }

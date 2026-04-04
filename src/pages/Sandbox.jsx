@@ -4,6 +4,7 @@ import { classifyLocalMotion } from "../lib/motionMatcher";
 import { captureSnapshot } from "../lib/chartSnapshot";
 import { LiveChart } from "../components/LiveChart/LiveChart";
 import { PatternCard } from "../components/PatternCard/PatternCard";
+import { QrFooter } from "../components/QrFooter/QrFooter";
 import "../styles/sandbox.css";
 
 const DETECTION_INTERVAL_MS = 4000;
@@ -243,6 +244,7 @@ export function SandboxPage() {
           ))}
         </div>
       )}
+      <QrFooter />
     </div>
   );
 }

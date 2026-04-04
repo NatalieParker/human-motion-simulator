@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
 import { round, fmt } from "../lib/format";
 import { StatusBadge } from "../components/StatusBadge/StatusBadge";
+import { QrFooter } from "../components/QrFooter/QrFooter";
 import "../styles/controller.css";
 
 const SEND_INTERVAL_MS = 100;
@@ -108,6 +109,7 @@ export function ControllerPage() {
       </div>
 
       <Log entries={logs} />
+      <QrFooter />
     </div>
   );
 }

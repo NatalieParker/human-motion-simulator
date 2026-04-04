@@ -10,6 +10,7 @@ import { MatchMeter } from "./components/MatchMeter/MatchMeter";
 import { ReferenceChart } from "./components/ReferenceChart/ReferenceChart";
 import { LiveChart } from "./components/LiveChart/LiveChart";
 import { ChallengeOverlay } from "./components/ChallengeOverlay/ChallengeOverlay";
+import { QrFooter } from "./components/QrFooter/QrFooter";
 import { reviewLearningAnswer, explainLearningQuestion } from "./lib/gemini";
 import "./styles/dashboard.css";
 
@@ -423,6 +424,8 @@ export function App() {
           </div>
         </div>
       )}
+
+      <QrFooter />
     </div>
   );
 }
