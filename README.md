@@ -1,91 +1,111 @@
 # Mobile Sensor Practice
 
-A two-page web app that streams accelerometer data from a mobile phone to a desktop dashboard in real time using **Firebase Realtime Database**.
+A Vite + Preact app that streams accelerometer data from a phone to a desktop browser in real time using **Supabase** (Postgres + Realtime). The phone and desktop stay in sync via a small session row: a **start/stop signal** and a **JSON payload** for the latest sensor sample.
 
-| Page | Opened on | Purpose |
-|------|-----------|---------|
-| `controller.html` | Mobile phone | Reads the accelerometer and sends data to Firebase |
-| `main.html` | Desktop / laptop | Sends start/stop signals, displays live data and chart |
-
----
-
-## Third-Party Libraries
-
-| Library | Version | CDN | Why it's used |
-|---------|---------|-----|---------------|
-| **Firebase JS SDK (compat)** | 10.12.0 | `gstatic.com/firebasejs/…` | Provides the Realtime Database that both pages use to communicate. The *compat* build exposes the classic `firebase.database()` API so it works directly in `<script>` tags without a bundler. |
-| **Chart.js** | 4.4.3 | `cdn.jsdelivr.net/npm/chart.js` | Draws the live acceleration-vs-time line graph on the main page. Chosen for its zero-dependency UMD bundle, simple API, and good performance with streaming data. |
-
-No build tools, bundlers, or `npm install` are required — everything is loaded from CDNs.
+| Page | URL (dev) | Opened on | Purpose |
+|------|-----------|-----------|---------|
+| Home | `/` (`index.html`) | Any | Menu: Learn vs Explore |
+| Train | `/train.html` | Desktop | Main game: match motion to the target pattern |
+| Controller | `/controller.html` | Mobile | Enable sensors, stream accelerometer data |
+| Sandbox | `/sandbox.html` | Desktop | Free-form exploration and pattern tagging |
 
 ---
 
-## Setup
+## Stack
 
-### 1. Create a Firebase project
+| Piece | Role |
+|-------|------|
+| **Vite** | Dev server and production build |
+| **Preact** | UI |
+| **Supabase JS** (`@supabase/supabase-js`) | Upserts + realtime subscriptions on a `session_state` table |
+| **Chart.js** | Live charts on dashboard-style views |
+| **OpenAI** (optional) | Learning helpers and sandbox pattern analysis when `VITE_OPENAI_API_KEY` is set (`src/lib/openai.js`) |
 
-1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project (or use an existing one).
-2. In **Build → Realtime Database**, click **Create Database**.
-   - Choose any region.
-   - For testing, select **Start in test mode** (allows open read/write for 30 days). For production, configure proper security rules.
-3. In **Project Settings → General → Your apps**, click the **Web** (`</>`) icon to register a web app.
-4. Copy the config object that Firebase shows you.
-
-### 2. Paste your Firebase config
-
-Open **both** `controller.html` and `main.html` and replace the placeholder `firebaseConfig` object with your real values:
-
-```js
-const firebaseConfig = {
-    apiKey:            "YOUR_REAL_API_KEY",
-    authDomain:        "your-project.firebaseapp.com",
-    databaseURL:       "https://your-project-default-rtdb.firebaseio.com",
-    projectId:         "your-project",
-    storageBucket:     "your-project.appspot.com",
-    messagingSenderId: "123456789012",
-    appId:             "1:123456789012:web:abc123def456"
-};
-```
-
-### 3. Serve the pages over HTTPS
-
-The Accelerometer API (`DeviceMotionEvent`) requires a **secure context** (HTTPS) on most mobile browsers. Options:
-
-- **GitHub Pages** — push the repo and enable Pages in Settings.
-- **Firebase Hosting** — run `firebase init hosting` then `firebase deploy`.
-- **Local dev** — use a tool like [serve](https://www.npmjs.com/package/serve) or VS Code's Live Server extension and access via `https://` (you may need a self-signed cert or use `ngrok`/`localhost.run` to tunnel).
-
-### 4. Use the app
-
-1. Open `main.html` on your desktop browser.
-2. Open `controller.html` on your mobile phone browser (same Firebase project).
-3. On the phone, tap **Enable Sensors** (grants accelerometer permission on iOS).
-4. On the desktop, click **Start** — the phone begins streaming data.
-5. Watch the live numbers and chart update on the desktop.
-6. Click **Stop** to end the session.
+The realtime bridge lives in `src/lib/supabase.js`: it mirrors the old “Firebase path” idea (`session/signal`, `session/sensorData`) as columns on one row per session.
 
 ---
 
-## How It Works
+## Prerequisites
+
+- Node.js and npm
+- A [Supabase](https://supabase.com/) project
+
+---
+
+## 1. Create the database table
+
+In the Supabase SQL editor, run:
+
+```sql
+create table if not exists public.session_state (
+  id text primary key,
+  signal text,
+  sensor_data jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.session_state replica identity full;
+```
+
+Enable **Realtime** for this table: **Database → Replication** (or **Table editor → your table → Realtime**), and turn on `INSERT`, `UPDATE`, and `DELETE` for `public.session_state` as needed for your plan.
+
+For local development with the **anon** key, add Row Level Security policies that allow `select`, `insert`, and `update` on `session_state` for the `anon` role (tighten this before production).
+
+---
+
+## 2. Environment variables
+
+Copy `.env.example` to `.env` in the project root and set:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SUPABASE_URL` | Yes | Project URL (`https://….supabase.co`) |
+| `VITE_SUPABASE_ANON_KEY` | Yes | **anon public** key (Project Settings → API) |
+| `VITE_OPENAI_API_KEY` | No | OpenAI API key for AI features (learning + pattern analysis) |
+| `VITE_OPENAI_MODEL` | No | Chat model (defaults to `gpt-4o-mini`) |
+| `VITE_SUPABASE_SESSION_ID` | No | Defaults to `default`; change to isolate sessions |
+| `VITE_SUPABASE_SESSION_TABLE` | No | Defaults to `session_state` if your table name differs |
+
+This repo’s `vite.config.js` sets `envDir` to a parent folder for portal embedding. If `.env` is not picked up when you run `npm run dev`, either place `.env` where that `envDir` resolves, or adjust `envDir` for standalone development.
+
+---
+
+## 3. Install and run
+
+```bash
+npm install
+npm run dev
+```
+
+Then:
+
+1. Open **Train** (or Sandbox) on the desktop. With the default `vite.config.js` `base`, that is typically `http://localhost:5173/staticGames/human-motion/train.html` (see `data/game.json` for `game-id`).
+2. Open **Controller** on the phone on the same origin (or tunnel with HTTPS for real devices).
+3. On the phone, tap **Enable Sensors** (iOS needs a user gesture for motion permission).
+4. On the desktop, start the session; the phone streams samples until you stop.
+
+Use **HTTPS** in production: `DeviceMotionEvent` generally needs a secure context on mobile.
+
+---
+
+## How it works
 
 ```
-controller.html                  Firebase RTDB                  main.html
-─────────────                    ────────────                   ─────────
-                                 /session/signal ◄──── writes "start"/"stop"
-listens for signal ◄──────────── /session/signal
-                                 
-reads DeviceMotionEvent
-throttles to 10 Hz
-writes sensor data ──────────► /session/sensorData
-                                 /session/sensorData ──────► listens, displays,
-                                                              updates chart
+controller (phone)              Supabase                    train / sandbox (desktop)
+─────────────────               ────────                    ─────────────────────────
+writes signal / sensor_data  →  session_state row  →      subscribes + reads JSON
 ```
 
-### Data sent per sample
+- **`signal`**: `"start"` or `"stop"` — tells the controller when to attach `devicemotion` and send samples.
+- **`sensor_data`**: JSON — latest reading (shape your controller sends; typically `acceleration` + `timestamp`).
+
+Conceptually this replaces the old Firebase paths `/session/signal` and `/session/sensorData` with one upserted row keyed by `VITE_SUPABASE_SESSION_ID`.
+
+### Example payload per sample
 
 ```json
 {
-  "acceleration":                 { "x": 0.12, "y": -0.34, "z": 9.78 },
+  "acceleration": { "x": 0.12, "y": -0.34, "z": 9.78 },
   "accelerationIncludingGravity": { "x": 0.15, "y": -0.30, "z": 0.02 },
   "timestamp": 1710600000000
 }
@@ -93,29 +113,29 @@ writes sensor data ──────────► /session/sensorData
 
 ### Throttle rate
 
-The controller sends data at **10 Hz** (one sample every 100 ms). This balances smooth visuals on the dashboard with reasonable Firebase write usage. You can adjust `SEND_INTERVAL_MS` in `controller.html`.
+The mobile controller throttles sends (see `SEND_INTERVAL_MS` in `src/pages/Controller.jsx`). Adjust if you want smoother charts vs fewer writes.
 
 ---
 
-## Firebase Database Rules (Test Mode)
+## Production build
 
-For quick testing the default test-mode rules work:
-
-```json
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
+```bash
+npm run build
+npm run preview
 ```
 
-For production, lock it down to authenticated users or specific paths.
+Deploy the `dist/` output to any static host. Set the same `VITE_*` variables in your host’s environment or build pipeline.
 
 ---
 
-## Browser Compatibility Notes
+## Legacy static HTML (optional)
 
-- **iOS Safari 13+**: Requires `DeviceMotionEvent.requestPermission()` triggered by a user gesture — handled by the "Enable Sensors" button.
-- **Android Chrome**: Motion events are available without a permission prompt on most devices.
-- **Desktop browsers**: Will connect to Firebase and display data, but won't generate meaningful accelerometer readings unless the device has a sensor.
+Root files `main.html` and older CDN-based demos may still reference **Firebase** in comments or scripts. The **supported** path for phone ↔ desktop sync in this project is the Vite app + Supabase as above.
+
+---
+
+## Browser compatibility
+
+- **iOS Safari 13+**: `DeviceMotionEvent.requestPermission()` must run from a user gesture — the Controller page handles this via **Enable Sensors**.
+- **Android Chrome**: Motion events usually work without an extra permission prompt.
+- **Desktop**: Can connect and show data; meaningful accelerometer data requires a suitable device.

@@ -1,7 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-const SANDBOX_PROMPT = 
-`You are analyzing accelerometer data from a smartphone in someone's pocket.
+const SANDBOX_PROMPT = `You are analyzing accelerometer data from a smartphone in someone's pocket.
 The data contains x, y, z acceleration values in m/s² sampled at 10Hz.
 
 Determine if this data contains a recognizable human motion pattern.
@@ -20,24 +19,35 @@ Example: "This motion looks like walking with 85% confidence. The data shows rhy
 Data:
 `;
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const MODEL = import.meta.env.VITE_OPENAI_MODEL || "gpt-4o-mini";
 
-function getModel() {
-  if (!API_KEY) throw new Error("VITE_GEMINI_API_KEY is not set in .env");
-  const genAI = new GoogleGenerativeAI(API_KEY);
-  return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+function getClient() {
+  if (!API_KEY) throw new Error("VITE_OPENAI_API_KEY is not set in .env");
+  return new OpenAI({
+    apiKey: API_KEY,
+    dangerouslyAllowBrowser: true,
+  });
+}
+
+async function completeText(prompt) {
+  const openai = getClient();
+  const completion = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.4,
+  });
+  const text = completion.choices[0]?.message?.content?.trim();
+  if (!text) throw new Error("Empty response from OpenAI");
+  return text;
 }
 
 export async function analyzeMotion(dataWindow) {
-  const model = getModel();
+  const formatted = dataWindow
+    .map((d) => `x:${d.x.toFixed(3)} y:${d.y.toFixed(3)} z:${d.z.toFixed(3)}`)
+    .join("\n");
 
-  const formatted = dataWindow.map((d) =>
-    `x:${d.x.toFixed(3)} y:${d.y.toFixed(3)} z:${d.z.toFixed(3)}`
-  ).join("\n");
-
-  const result = await model.generateContent(SANDBOX_PROMPT + formatted);
-  const text = result.response.text().trim();
-
+  const text = await completeText(SANDBOX_PROMPT + formatted);
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("No JSON in response");
 
@@ -102,7 +112,6 @@ export async function reviewLearningAnswer({
   targetPattern,
   userPattern,
 }) {
-  const model = getModel();
   const prompt = buildLearningReviewPrompt({
     motion,
     question,
@@ -110,8 +119,7 @@ export async function reviewLearningAnswer({
     targetPattern,
     userPattern,
   });
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  return completeText(prompt);
 }
 
 export async function explainLearningQuestion({
@@ -120,13 +128,11 @@ export async function explainLearningQuestion({
   targetPattern,
   userPattern,
 }) {
-  const model = getModel();
   const prompt = buildLearningExplainPrompt({
     motion,
     question,
     targetPattern,
     userPattern,
   });
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  return completeText(prompt);
 }

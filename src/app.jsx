@@ -11,7 +11,7 @@ import { ReferenceChart } from "./components/ReferenceChart/ReferenceChart";
 import { LiveChart } from "./components/LiveChart/LiveChart";
 import { ChallengeOverlay } from "./components/ChallengeOverlay/ChallengeOverlay";
 import { QrFooter } from "./components/QrFooter/QrFooter";
-import { reviewLearningAnswer, explainLearningQuestion } from "./lib/gemini";
+import { reviewLearningAnswer, explainLearningQuestion } from "./lib/openai";
 import { usePortalGameData } from "./lib/usePortalGameData";
 import "./styles/dashboard.css";
 
