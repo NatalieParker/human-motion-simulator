@@ -12,7 +12,7 @@ import { LiveChart } from "./components/LiveChart/LiveChart";
 import { ChallengeOverlay } from "./components/ChallengeOverlay/ChallengeOverlay";
 import { QrFooter } from "./components/QrFooter/QrFooter";
 import { reviewLearningAnswer, explainLearningQuestion } from "./lib/gemini";
-import { fetchGameData, saveGameData } from "./lib/portalBridge";
+import { usePortalGameData } from "./lib/usePortalGameData";
 import "./styles/dashboard.css";
 
 const MATCH_THRESHOLD = 0.55;
@@ -71,6 +71,7 @@ export function App() {
   const [learningLoading, setLearningLoading] = useState(false);
   const [learningError, setLearningError] = useState(null);
   const [matchedUserPattern, setMatchedUserPattern] = useState(null);
+  const { data: portalData, mergeAndPersist } = usePortalGameData();
 
   const startTimeRef = useRef(Date.now());
   const liveBufferRef = useRef([]);
@@ -79,7 +80,6 @@ export function App() {
   const smoothedScoreRef = useRef(0);
   const refFeaturesRef = useRef(null);
   const devMatchTimerRef = useRef(null);
-  const persistedGameDataRef = useRef({});
   const questionsAskedRef = useRef(0);
   const learningAnswerCountedRef = useRef(false);
 
@@ -100,52 +100,25 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    const existingCount = Number(portalData.questions_asked);
+    if (Number.isFinite(existingCount) && existingCount >= 0) {
+      questionsAskedRef.current = Math.floor(existingCount);
+    }
+  }, [portalData]);
 
-    void (async () => {
-      try {
-        const data = await fetchGameData();
-        if (!isMounted || !data || typeof data !== "object" || Array.isArray(data)) {
-          return;
-        }
-
-        persistedGameDataRef.current = data;
-        const existingCount = Number(data.questions_asked);
-        if (Number.isFinite(existingCount) && existingCount >= 0) {
-          questionsAskedRef.current = Math.floor(existingCount);
-        }
-      } catch {
-        // Ignore bridge failures when running outside the portal iframe.
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  async function incrementQuestionsAsked() {
+  function incrementQuestionsAsked() {
     const nextCount = questionsAskedRef.current + 1;
     questionsAskedRef.current = nextCount;
 
-    const baseData =
-      persistedGameDataRef.current &&
-      typeof persistedGameDataRef.current === "object" &&
-      !Array.isArray(persistedGameDataRef.current)
-        ? persistedGameDataRef.current
+    const baseData = portalData && typeof portalData === "object" && !Array.isArray(portalData)
+      ? portalData
         : {};
 
     const nextData = {
       ...baseData,
       questions_asked: nextCount,
     };
-    persistedGameDataRef.current = nextData;
-
-    try {
-      await saveGameData(nextData);
-    } catch {
-      // Ignore bridge failures when running outside the portal iframe.
-    }
+    mergeAndPersist(nextData);
   }
 
   useEffect(() => {
