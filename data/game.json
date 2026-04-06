@@ -5,7 +5,7 @@
   "description": "Stream accelerometer data from your phone to simulate human motion in a real-time desktop visualization.",
   "longDescription": [
     "Human Motion Simulator is an interactive science game that connects your mobile phone's accelerometer to a desktop simulation. By moving your phone, you control a virtual figure in real-time, exploring how acceleration, velocity, and position relate to physical movement.",
-    "The app uses Firebase for real-time data streaming between your phone and desktop, with a Kaplay-powered visualization that renders the motion on screen. Students can experiment with different movements and observe how sensor data translates to simulated motion.",
+    "The app uses Supabase for real-time data streaming between your phone and desktop, with a Kaplay-powered visualization that renders the motion on screen. Optional OpenAI-powered helpers support learning and pattern analysis. Students can experiment with different movements and observe how sensor data translates to simulated motion.",
     "This hands-on approach makes abstract physics concepts like inertia, acceleration, and force tangible by letting students see the direct connection between their physical movements and the resulting simulation data."
   ],
   "tags": ["physics", "motion", "accelerometer", "simulation", "mobile"],

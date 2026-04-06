@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { analyzeMotion } from "../../lib/gemini";
+import { analyzeMotion } from "../../lib/openai";
 import "./PatternCard.css";
 
 const MOTION_COLORS = {
@@ -36,7 +36,7 @@ export function PatternCard({ pattern }) {
       const result = await analyzeMotion(pattern.dataWindow);
       setAiResult(result);
     } catch (err) {
-      console.error("Gemini analysis failed:", err);
+      console.error("OpenAI analysis failed:", err);
       setAiError(err.message || "Analysis failed");
     }
     setAiLoading(false);
@@ -49,7 +49,7 @@ export function PatternCard({ pattern }) {
       const result = await analyzeMotion(pattern.dataWindow);
       setAiResult(result);
     } catch (err) {
-      console.error("Gemini analysis failed:", err);
+      console.error("OpenAI analysis failed:", err);
       setAiError(err.message || "Analysis failed");
     }
     setAiLoading(false);
@@ -87,7 +87,7 @@ export function PatternCard({ pattern }) {
       {expanded && (
         <div class="pattern-card__ai" onClick={(e) => e.stopPropagation()}>
           {aiLoading && (
-            <p class="pattern-card__ai-loading">Analyzing with Gemini...</p>
+            <p class="pattern-card__ai-loading">Analyzing with AI...</p>
           )}
           {aiError && (
             <div class="pattern-card__ai-error">
@@ -112,7 +112,7 @@ export function PatternCard({ pattern }) {
                 >
                   {Math.round(aiResult.confidence * 100)}%
                 </span>
-                <span class="pattern-card__ai-label">Gemini</span>
+                <span class="pattern-card__ai-label">OpenAI</span>
               </div>
               {aiResult.description && (
                 <p class="pattern-card__desc">{aiResult.description}</p>

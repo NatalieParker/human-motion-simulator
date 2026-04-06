@@ -19,7 +19,7 @@ A Vite + Preact app that streams accelerometer data from a phone to a desktop br
 | **Preact** | UI |
 | **Supabase JS** (`@supabase/supabase-js`) | Upserts + realtime subscriptions on a `session_state` table |
 | **Chart.js** | Live charts on dashboard-style views |
-| **Google Gemini** (optional) | Learning / AI helpers when `VITE_GEMINI_API_KEY` is set |
+| **OpenAI** (optional) | Learning helpers and sandbox pattern analysis when `VITE_OPENAI_API_KEY` is set (`src/lib/openai.js`) |
 
 The realtime bridge lives in `src/lib/supabase.js`: it mirrors the old “Firebase path” idea (`session/signal`, `session/sensorData`) as columns on one row per session.
 
@@ -61,7 +61,8 @@ Copy `.env.example` to `.env` in the project root and set:
 |----------|----------|-------------|
 | `VITE_SUPABASE_URL` | Yes | Project URL (`https://….supabase.co`) |
 | `VITE_SUPABASE_ANON_KEY` | Yes | **anon public** key (Project Settings → API) |
-| `VITE_GEMINI_API_KEY` | No | Only if you use Gemini-powered features |
+| `VITE_OPENAI_API_KEY` | No | OpenAI API key for AI features (learning + pattern analysis) |
+| `VITE_OPENAI_MODEL` | No | Chat model (defaults to `gpt-4o-mini`) |
 | `VITE_SUPABASE_SESSION_ID` | No | Defaults to `default`; change to isolate sessions |
 | `VITE_SUPABASE_SESSION_TABLE` | No | Defaults to `session_state` if your table name differs |
 
