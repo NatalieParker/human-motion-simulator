@@ -9,9 +9,11 @@ const require = createRequire(import.meta.url);
 const gameData = require("./data/game.json");
 
 export default defineConfig({
-  // Read .env values from the parent portal repository.
-  envDir: resolve(__dirname, "../.."),
   base: `/staticGames/${gameData["game-id"]}/`,
+  server: {
+    // Cloudflare quick tunnels (and similar) use random subdomains; allow the suffix.
+    allowedHosts: [".trycloudflare.com", ".loca.lt", ".ngrok-free.app", ".ngrok.io"],
+  },
   plugins: [preact()],
   resolve: {
     alias: {

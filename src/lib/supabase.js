@@ -2,8 +2,26 @@ import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-const SESSION_ID = import.meta.env.VITE_SUPABASE_SESSION_ID || "default";
 const SESSION_TABLE = import.meta.env.VITE_SUPABASE_SESSION_TABLE || "session_state";
+
+/** Row id in session_state; set via configureSessionChannel (per tab / per phone pairing). */
+let channelSessionId = import.meta.env.VITE_SUPABASE_SESSION_ID || "";
+
+export function configureSessionChannel(sessionId) {
+  if (!sessionId || typeof sessionId !== "string") {
+    throw new Error("configureSessionChannel: sessionId must be a non-empty string");
+  }
+  channelSessionId = sessionId;
+}
+
+export function getSessionChannelId() {
+  return channelSessionId;
+}
+
+/** Call on controller page when ?session= is missing so env defaults cannot pair to the wrong row. */
+export function clearSessionChannel() {
+  channelSessionId = "";
+}
 
 let supabaseClient = null;
 
@@ -40,10 +58,14 @@ function snapshotForValue(value) {
 }
 
 async function set(refObj, value) {
+  const id = getSessionChannelId();
+  if (!id) {
+    throw new Error("No session channel configured. Open train/sandbox first, or use controller?session=<uuid>.");
+  }
   const supabase = getClient();
   const now = new Date().toISOString();
   const payload = {
-    id: SESSION_ID,
+    id,
     updated_at: now,
   };
 
@@ -66,10 +88,12 @@ function onValue(refObj, callback) {
   const supabase = getClient();
 
   const emitCurrentValue = async () => {
+    const sid = getSessionChannelId();
+    if (!sid) return;
     const { data, error } = await supabase
       .from(SESSION_TABLE)
       .select("signal, sensor_data")
-      .eq("id", SESSION_ID)
+      .eq("id", sid)
       .maybeSingle();
 
     if (disposed || error || !data) return;
@@ -78,15 +102,19 @@ function onValue(refObj, callback) {
 
   void emitCurrentValue();
 
+  const sid = getSessionChannelId();
+  if (!sid) {
+    return () => {};
+  }
   const channel = supabase
-    .channel(`session-${SESSION_ID}-${refObj.path}-${Math.random().toString(36).slice(2)}`)
+    .channel(`session-${sid}-${refObj.path}-${Math.random().toString(36).slice(2)}`)
     .on(
       "postgres_changes",
       {
         event: "*",
         schema: "public",
         table: SESSION_TABLE,
-        filter: `id=eq.${SESSION_ID}`,
+        filter: `id=eq.${sid}`,
       },
       (payload) => {
         if (disposed) return;
