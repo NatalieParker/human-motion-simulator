@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
 import { round, fmt } from "../lib/format";
 import { StatusBadge } from "../components/StatusBadge/StatusBadge";
-import { QrFooter } from "../components/QrFooter/QrFooter";
+import { applyControllerSessionFromUrl } from "../lib/sessionChannel";
 import "../styles/controller.css";
 
 const SEND_INTERVAL_MS = 100;
 
 export function ControllerPage() {
+  const [pairingReady, setPairingReady] = useState(false);
   const [sensorEnabled, setSensorEnabled] = useState(false);
   const [status, setStatus] = useState({ text: "Sensor not enabled", variant: "idle" });
   const [latestReading, setLatestReading] = useState(null);
@@ -42,6 +43,23 @@ export function ControllerPage() {
   }, [appendLog]);
 
   useEffect(() => {
+    const id = applyControllerSessionFromUrl();
+    if (id) {
+      setPairingReady(true);
+      appendLog(`Paired session: ${id}`);
+    } else {
+      setPairingReady(false);
+      setStatus({
+        text:
+          "Missing session. Open the QR code or link from the train/sandbox page on your computer (URL must include ?session=...).",
+        variant: "stopped",
+      });
+      appendLog("No ?session= in URL — cannot connect to a desktop session.");
+    }
+  }, [appendLog]);
+
+  useEffect(() => {
+    if (!pairingReady) return;
     const unsubscribe = onValue(signalRef, (snapshot) => {
       const signal = snapshot.val();
 
@@ -64,9 +82,10 @@ export function ControllerPage() {
       unsubscribe();
       window.removeEventListener("devicemotion", onDeviceMotion);
     };
-  }, [sensorEnabled, onDeviceMotion, appendLog]);
+  }, [pairingReady, sensorEnabled, onDeviceMotion, appendLog]);
 
   async function handleEnableSensors() {
+    if (!pairingReady) return;
     try {
       if (typeof DeviceMotionEvent.requestPermission === "function") {
         const permission = await DeviceMotionEvent.requestPermission();
@@ -95,7 +114,7 @@ export function ControllerPage() {
 
       <button
         class="controller__enable-btn"
-        disabled={sensorEnabled}
+        disabled={sensorEnabled || !pairingReady}
         onClick={handleEnableSensors}
       >
         {sensorEnabled ? "Sensors Enabled \u2713" : "Enable Sensors"}
@@ -109,7 +128,6 @@ export function ControllerPage() {
       </div>
 
       <Log entries={logs} />
-      <QrFooter />
     </div>
   );
 }

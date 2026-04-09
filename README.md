@@ -99,7 +99,16 @@ writes signal / sensor_data  →  session_state row  →      subscribes + reads
 - **`signal`**: `"start"` or `"stop"` — tells the controller when to attach `devicemotion` and send samples.
 - **`sensor_data`**: JSON — latest reading (shape your controller sends; typically `acceleration` + `timestamp`).
 
-Conceptually this replaces the old Firebase paths `/session/signal` and `/session/sensorData` with one upserted row keyed by `VITE_SUPABASE_SESSION_ID`.
+Conceptually this replaces the old Firebase paths `/session/signal` and `/session/sensorData` with one upserted row keyed by a **per–browser-tab pairing id** (UUID).
+
+### One phone per desktop session
+
+- Each **train** or **sandbox** tab generates a random session id (stored in `sessionStorage`) and shows a **QR code + link** to `controller.html?session=<uuid>`.
+- Only clients using that exact `session` id read/write the same `session_state` row in Supabase, so different computers/tabs do not collide by default.
+- **New phone pairing** on the desktop generates a fresh UUID; scan the new QR so the phone uses the new URL.
+- If two phones open the **same** controller URL, they would still share one row (last write wins). For strict single-controller locking you’d need server-side pairing (Edge Function), which this repo does not implement.
+
+Optional: set `VITE_SUPABASE_SESSION_ID` only if you need a fixed id for special deployments; normal use relies on the dynamic pairing id above.
 
 ### Example payload per sample
 

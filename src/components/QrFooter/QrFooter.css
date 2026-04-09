@@ -17,3 +17,16 @@
   border-radius: 10px;
   background: #fff;
 }
+
+.qr-footer__link {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.qr-footer__link a {
+  color: #38bdf8;
+}
+
+.qr-footer__new-pairing {
+  margin-top: 0.75rem;
+}
