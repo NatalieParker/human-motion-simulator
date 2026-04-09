@@ -10,6 +10,10 @@ const gameData = require("./data/game.json");
 
 export default defineConfig({
   base: `/staticGames/${gameData["game-id"]}/`,
+  server: {
+    // Cloudflare quick tunnels (and similar) use random subdomains; allow the suffix.
+    allowedHosts: [".trycloudflare.com", ".loca.lt", ".ngrok-free.app", ".ngrok.io"],
+  },
   plugins: [preact()],
   resolve: {
     alias: {

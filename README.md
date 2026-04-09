@@ -47,9 +47,15 @@ create table if not exists public.session_state (
 alter table public.session_state replica identity full;
 ```
 
+If you see **`invalid input syntax for type bigint`** (UUID in the message), your `id` column is still numeric. If you see **`identity column type must be smallint, integer, or bigint`**, `id` was defined as **IDENTITY** or **serial** — you must drop that before changing the type. Run the full script **`supabase/migrate_session_id_to_text.sql`** (drop identity → drop default → alter type to `text`).
+
 Enable **Realtime** for this table: **Database → Replication** (or **Table editor → your table → Realtime**), and turn on `INSERT`, `UPDATE`, and `DELETE` for `public.session_state` as needed for your plan.
 
-For local development with the **anon** key, add Row Level Security policies that allow `select`, `insert`, and `update` on `session_state` for the `anon` role (tighten this before production).
+This game is designed to work **without Supabase Auth** (visitors only use the **anon** key). RLS must allow role **`anon`** to `select` / `insert` / `update` on `session_state`. Use **`supabase/session_state_rls_anon_no_login.sql`** in the SQL editor.
+
+Do **not** use `to authenticated` policies unless you add sign-in to the app; otherwise the game will get RLS errors.
+
+Isolation between sessions comes from **random UUID pairing ids** in the app, not from Postgres knowing “who” the user is.
 
 ---
 
@@ -63,10 +69,10 @@ Copy `.env.example` to `.env` in the project root and set:
 | `VITE_SUPABASE_ANON_KEY` | Yes | **anon public** key (Project Settings → API) |
 | `VITE_OPENAI_API_KEY` | No | OpenAI API key for AI features (learning + pattern analysis) |
 | `VITE_OPENAI_MODEL` | No | Chat model (defaults to `gpt-4o-mini`) |
-| `VITE_SUPABASE_SESSION_ID` | No | Defaults to `default`; change to isolate sessions |
+| `VITE_SUPABASE_SESSION_ID` | No | Rare override; pairing uses per-tab UUIDs from `sessionChannel.js` |
 | `VITE_SUPABASE_SESSION_TABLE` | No | Defaults to `session_state` if your table name differs |
 
-This repo’s `vite.config.js` sets `envDir` to a parent folder for portal embedding. If `.env` is not picked up when you run `npm run dev`, either place `.env` where that `envDir` resolves, or adjust `envDir` for standalone development.
+Put `.env` in the project root (next to `vite.config.js`) unless you change `envDir` for a monorepo.
 
 ---
 
