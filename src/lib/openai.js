@@ -136,3 +136,43 @@ export async function explainLearningQuestion({
   });
   return completeText(prompt);
 }
+
+export async function coachConceptAnswer({
+  conceptTitle,
+  conceptText,
+  experimentText,
+  question,
+  userAnswer,
+  sampleWindow,
+}) {
+  const sampleSummary = Array.isArray(sampleWindow)
+    ? sampleWindow
+        .slice(-40)
+        .map(
+          (s) =>
+            `x:${Number(s.x || 0).toFixed(3)} y:${Number(s.y || 0).toFixed(3)} z:${Number(s.z || 0).toFixed(3)}`
+        )
+        .join("\n")
+    : "no samples";
+
+  const prompt = `You are a patient physics tutor for a motion-learning game.
+
+Concept title: ${conceptTitle}
+Concept explanation: ${conceptText}
+Experiment instructions: ${experimentText}
+Comprehension question: ${question}
+Student answer: ${userAnswer}
+
+Recent accelerometer samples (x, y, z):
+${sampleSummary}
+
+Task:
+- Decide whether the student understood the concept correctly.
+- If mostly correct, reinforce the right intuition and add one deeper insight.
+- If incomplete or incorrect, explain exactly what they missed and correct it.
+- Reference axis behavior clearly (X/Y/Z, sign flips, magnitude changes) when relevant.
+- Keep to one short paragraph.
+- Start with exactly "Correct:" or "Not quite:".`;
+
+  return completeText(prompt);
+}

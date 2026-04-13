@@ -1,0 +1,151 @@
+.learn-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.learn-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.learn-page__header h1 {
+  margin: 0;
+  text-align: left;
+}
+
+.learn-page__intro {
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.learn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.learn-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none;
+  color: #e2e8f0;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 180px;
+}
+
+.learn-card--completed {
+  border-color: #334155;
+  background: #1e293b;
+}
+
+.learn-card--locked {
+  opacity: 0.8;
+}
+
+.learn-card h2 {
+  font-size: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.learn-card p {
+  color: #94a3b8;
+  font-size: 0.92rem;
+}
+
+.learn-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.learn-card__cta {
+  font-size: 0.85rem;
+  color: #38bdf8;
+}
+
+.learn-badge {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.learn-badge--done {
+  color: #22c55e;
+}
+
+.concept-card,
+.experiment-card,
+.question-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.concept-card h2,
+.experiment-card h3,
+.question-card h3 {
+  margin-bottom: 0.5rem;
+}
+
+.question-card__input {
+  width: 100%;
+  margin-top: 0.75rem;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.75rem;
+}
+
+.learn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+
+.learn-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  color: white;
+  background: #2563eb;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.learn-btn--start {
+  background: #16a34a;
+}
+
+.learn-btn--stop {
+  background: #dc2626;
+}
+
+.learn-btn--secondary {
+  background: #475569;
+}
+
+.learn-error {
+  color: #fca5a5;
+  margin-top: 0.65rem;
+}
+
+.learn-feedback {
+  margin-top: 0.65rem;
+  color: #bfdbfe;
+}
