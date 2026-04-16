@@ -1,9 +1,9 @@
 import { useMemo } from "preact/hooks";
-import { QrFooter } from "../../components/QrFooter/QrFooter";
-import { getLearnCompletionMap } from "../lib/learnProgress";
-import { LEARN_CONCEPTS } from "../lib/learnConcepts";
-import { initDesktopPairingSession, resetDesktopPairingSession } from "../../lib/sessionChannel";
-import "../styles/learn.css";
+import { QrFooter } from "../components/QrFooter/QrFooter";
+import { getLearnCompletionMap } from "../levels/lib/learnProgress";
+import { LEARN_CONCEPTS } from "../levels/lib/learnConcepts";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel";
+import "../levels/styles/learn.css";
 
 export function LearnLevelsPage() {
   const sessionId = useMemo(() => initDesktopPairingSession(), []);
