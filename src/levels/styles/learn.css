@@ -46,10 +46,6 @@
   background: #1e293b;
 }
 
-.learn-card--locked {
-  opacity: 0.8;
-}
-
 .learn-card h2 {
   font-size: 1rem;
   margin-bottom: 0.45rem;
@@ -116,6 +112,25 @@
   flex-wrap: wrap;
   gap: 0.65rem;
   margin-top: 0.8rem;
+}
+
+.learn-reference-chart {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.learn-reference-chart__canvas-wrap {
+  position: relative;
+  height: 240px;
+}
+
+.learn-observation-label {
+  margin-top: 0.85rem;
+  margin-bottom: 0.45rem;
+  color: #cbd5e1;
 }
 
 .learn-btn {

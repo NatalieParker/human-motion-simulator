@@ -6,7 +6,7 @@ export function HomePage() {
       <h1 class="home__title">Human Motion Simulator</h1>
 
       <section class="home__cards">
-        <a class="home-card home-card--link" href="levels.html">
+        <a class="home-card home-card--link" href="levels/levels.html">
           <span class="home-card__title">Learn</span>
           <span class="home-card__desc">Learn concepts through short level cards</span>
         </a>

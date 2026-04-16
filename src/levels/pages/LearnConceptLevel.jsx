@@ -1,21 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "preact/hooks";
-import { LiveChart } from "../components/LiveChart/LiveChart";
-import { QrFooter } from "../components/QrFooter/QrFooter";
-import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
+import { LiveChart } from "../../components/LiveChart/LiveChart";
+import { ReferenceChart } from "../components/ReferenceChart";
+import { QrFooter } from "../../components/QrFooter/QrFooter";
+import { signalRef, sensorDataRef, set, onValue } from "../../lib/firebase";
 import { markLevelCompleted } from "../lib/learnProgress";
-import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel";
-import { coachConceptAnswer } from "../lib/openai";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "../../lib/sessionChannel";
+import { coachConceptAnswer } from "../../lib/openai";
 import "../styles/learn.css";
 
-const CONCEPT_TITLE = "Direction changes axis traces, not the motion itself";
-const CONCEPT_TEXT =
-  "When you move your phone left versus right, the graph can flip sign on an axis because axis direction is relative to phone orientation. The physical motion can be similar even when one axis line goes positive in one direction and negative in the other.";
-const EXPERIMENT_TEXT =
-  "Move your phone left, then right. Try to keep both movements similar in speed and distance.";
-const QUESTION_TEXT =
-  "Describe what changed when you switched directions. Which axis changed, and how? Explain why moving left and right affects the graph this way.";
-
-export function LearnDirectionLevelPage() {
+export function LearnConceptLevel({ concept, pageTitle }) {
   const sessionId = useMemo(() => initDesktopPairingSession(), []);
   const [running, setRunning] = useState(false);
   const [sensorData, setSensorData] = useState(null);
@@ -25,6 +18,7 @@ export function LearnDirectionLevelPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState("");
   const [questionOpen, setQuestionOpen] = useState(false);
+  const [observationAnswer, setObservationAnswer] = useState("");
   const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
@@ -64,6 +58,7 @@ export function LearnDirectionLevelPage() {
   function handleRetry() {
     handleStop();
     setSamples([]);
+    setObservationAnswer("");
     setAnswer("");
     setAiFeedback("");
     setError("");
@@ -79,10 +74,10 @@ export function LearnDirectionLevelPage() {
     setError("");
     try {
       const feedback = await coachConceptAnswer({
-        conceptTitle: CONCEPT_TITLE,
-        conceptText: CONCEPT_TEXT,
-        experimentText: EXPERIMENT_TEXT,
-        question: QUESTION_TEXT,
+        conceptTitle: concept.conceptTitle,
+        conceptText: concept.conceptText,
+        experimentText: concept.experimentText,
+        question: concept.questionText,
         userAnswer: answer.trim(),
         sampleWindow: samples.slice(-40),
       });
@@ -95,7 +90,7 @@ export function LearnDirectionLevelPage() {
   }
 
   function handleFinishLevel() {
-    markLevelCompleted("direction-axis-change");
+    markLevelCompleted(concept.id);
     set(signalRef, "stop");
     window.location.href = "levels.html";
   }
@@ -108,20 +103,40 @@ export function LearnDirectionLevelPage() {
   return (
     <main class="learn-page">
       <header class="learn-page__header">
-        <h1>Learn Level 1</h1>
+        <h1>{pageTitle}</h1>
         <a class="learn-btn learn-btn--secondary" href="levels.html">
           Back to Learn
         </a>
       </header>
 
       <section class="concept-card">
-        <h2>{CONCEPT_TITLE}</h2>
-        <p>{CONCEPT_TEXT}</p>
+        <h2>{concept.conceptTitle}</h2>
+        <p>{concept.conceptText}</p>
       </section>
+
+      {Array.isArray(concept.sampleData) && concept.sampleData.length > 0 && (
+        <section class="experiment-card">
+          <h3>Reference acceleration data (without G)</h3>
+          {concept.sampleDataNote && <p>{concept.sampleDataNote}</p>}
+          <ReferenceChart sampleData={concept.sampleData} />
+          {concept.observationPrompt && (
+            <>
+              <p class="learn-observation-label">{concept.observationPrompt}</p>
+              <textarea
+                class="question-card__input"
+                rows={4}
+                value={observationAnswer}
+                onInput={(e) => setObservationAnswer(e.target.value)}
+                placeholder="Write your movement guess..."
+              />
+            </>
+          )}
+        </section>
+      )}
 
       <section class="experiment-card">
         <h3>Try this experiment</h3>
-        <p>{EXPERIMENT_TEXT}</p>
+        <p>{concept.experimentText}</p>
         <div class="learn-actions">
           {!running ? (
             <button class="learn-btn learn-btn--start" onClick={handleStart}>
@@ -146,7 +161,7 @@ export function LearnDirectionLevelPage() {
       {questionOpen && (
         <section class="question-card">
           <h3>Comprehension check</h3>
-          <p>{QUESTION_TEXT}</p>
+          <p>{concept.questionText}</p>
           <textarea
             class="question-card__input"
             rows={5}

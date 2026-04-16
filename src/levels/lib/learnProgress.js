@@ -1,7 +1,5 @@
 const STORAGE_KEY = "hms_learn_completion";
 
-export const LEVEL_DIRECTION_ID = "direction-axis-change";
-
 function readMap() {
   if (typeof window === "undefined") return {};
   try {
