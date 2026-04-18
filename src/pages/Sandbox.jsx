@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef, useMemo } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
-import { classifyLocalMotion } from "../lib/motionMatcher";
-import { captureSnapshot } from "../lib/chartSnapshot";
+import { classifyLocalMotion } from "../lib/motionMatcher/motionMatcher";
+import { captureSnapshot } from "../lib/chartSnapshot/chartSnapshot";
 import { LiveChart } from "../components/LiveChart/LiveChart";
 import { PatternCard } from "../components/PatternCard/PatternCard";
 import { QrFooter } from "../components/QrFooter/QrFooter";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel/sessionChannel";
 import "../styles/sandbox.css";
 
 const DETECTION_INTERVAL_MS = 4000;
 const DETECTION_WINDOW = 30;
 
 export function SandboxPage() {
+  const [pairingSessionId, setPairingSessionId] = useState(null);
   const [running, setRunning] = useState(false);
   const [sensorData, setSensorData] = useState(null);
   const [patterns, setPatterns] = useState([]);
@@ -25,16 +27,25 @@ export function SandboxPage() {
   const chartKeyRef = useRef(0);
 
   useEffect(() => {
+    const id = initDesktopPairingSession();
+    setPairingSessionId(id);
     set(signalRef, "stop");
   }, []);
 
   useEffect(() => {
+    if (!pairingSessionId) return;
     const unsubscribe = onValue(sensorDataRef, (snapshot) => {
       const data = snapshot.val();
       if (data) setSensorData(data);
     });
     return () => unsubscribe();
-  }, []);
+  }, [pairingSessionId]);
+
+  function handleNewPairing() {
+    const id = resetDesktopPairingSession();
+    setPairingSessionId(id);
+    set(signalRef, "stop");
+  }
 
   useEffect(() => {
     if (!running || !sensorData) return;
@@ -244,7 +255,7 @@ export function SandboxPage() {
           ))}
         </div>
       )}
-      <QrFooter />
+      <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
     </div>
   );
 }

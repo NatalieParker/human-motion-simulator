@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { analyzeMotion } from "../../lib/openai";
+import { analyzeMotion } from "../../lib/openai/openai";
 import "./PatternCard.css";
 
 const MOTION_COLORS = {

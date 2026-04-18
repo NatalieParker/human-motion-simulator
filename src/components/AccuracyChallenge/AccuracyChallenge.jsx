@@ -3,8 +3,8 @@ import {
   extractReferenceFeatures,
   extractLiveFeatures,
   computeMatchScore,
-} from "../../lib/motionMatcher";
-import { MOTION_LABELS } from "../../lib/motionPatterns";
+} from "../../lib/motionMatcher/motionMatcher";
+import { MOTION_LABELS } from "../../lib/motionPatterns/motionPatterns";
 import { ReferenceChart } from "../ReferenceChart/ReferenceChart";
 import { LiveChart } from "../LiveChart/LiveChart";
 import { MatchMeter } from "../MatchMeter/MatchMeter";

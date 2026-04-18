@@ -1,1 +1,1 @@
-export * from "./supabase.js";
+export * from "./supabase/supabase.js";

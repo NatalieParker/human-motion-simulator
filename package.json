@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "jest --runInBand",
+    "test:integration": "jest --runInBand src/tests/supabase.integration.test.js src/tests/openai.integration.test.js"
   },
   "repository": {
     "type": "git",
@@ -14,14 +16,17 @@
   },
   "license": "ISC",
   "dependencies": {
-    "openai": "^4.85.0",
     "@supabase/supabase-js": "^2.57.4",
     "chart.js": "^4.4.3",
     "kaplay": "^3001.0.19",
+    "openai": "^4.85.0",
     "preact": "^10.29.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.4",
+    "@swc/core": "^1.15.26",
+    "@swc/jest": "^0.2.39",
+    "jest": "^30.3.0",
     "vite": "^8.0.0"
   }
 }

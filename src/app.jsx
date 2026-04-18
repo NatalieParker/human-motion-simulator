@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "./lib/firebase";
-import { generatePattern, randomMotion } from "./lib/motionPatterns";
+import { generatePattern, randomMotion } from "./lib/motionPatterns/motionPatterns";
 import {
   extractReferenceFeatures,
   extractLiveFeatures,
   computeMatchScore,
-} from "./lib/motionMatcher";
+} from "./lib/motionMatcher/motionMatcher";
 import { MatchMeter } from "./components/MatchMeter/MatchMeter";
 import { ReferenceChart } from "./components/ReferenceChart/ReferenceChart";
 import { LiveChart } from "./components/LiveChart/LiveChart";
 import { ChallengeOverlay } from "./components/ChallengeOverlay/ChallengeOverlay";
 import { QrFooter } from "./components/QrFooter/QrFooter";
-import { reviewLearningAnswer, explainLearningQuestion } from "./lib/openai";
-import { usePortalGameData } from "./lib/usePortalGameData";
+import { reviewLearningAnswer, explainLearningQuestion } from "./lib/openai/openai";
+import { usePortalGameData } from "./lib/usePortalGameData/usePortalGameData";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "./lib/sessionChannel/sessionChannel";
 import "./styles/dashboard.css";
 
 const MATCH_THRESHOLD = 0.55;
@@ -72,6 +73,7 @@ export function App() {
   const [learningError, setLearningError] = useState(null);
   const [matchedUserPattern, setMatchedUserPattern] = useState(null);
   const { data: portalData, mergeAndPersist } = usePortalGameData();
+  const [pairingSessionId, setPairingSessionId] = useState(null);
 
   const startTimeRef = useRef(Date.now());
   const liveBufferRef = useRef([]);
@@ -84,6 +86,8 @@ export function App() {
   const learningAnswerCountedRef = useRef(false);
 
   useEffect(() => {
+    const id = initDesktopPairingSession();
+    setPairingSessionId(id);
     set(signalRef, "stop");
   }, []);
 
@@ -92,12 +96,13 @@ export function App() {
   }, [referencePattern]);
 
   useEffect(() => {
+    if (!pairingSessionId) return;
     const unsubscribe = onValue(sensorDataRef, (snapshot) => {
       const data = snapshot.val();
       if (data) setSensorData(data);
     });
     return () => unsubscribe();
-  }, []);
+  }, [pairingSessionId]);
 
   useEffect(() => {
     const existingCount = Number(portalData.questions_asked);
@@ -329,6 +334,12 @@ export function App() {
     }
   }
 
+  function handleNewPairing() {
+    const id = resetDesktopPairingSession();
+    setPairingSessionId(id);
+    set(signalRef, "stop");
+  }
+
   function handleLearningNext() {
     setLearningOpen(false);
     if (Math.random() < CHALLENGE_CHANCE) {
@@ -458,7 +469,7 @@ export function App() {
         </div>
       )}
 
-      <QrFooter />
+      <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
     </div>
   );
 }
