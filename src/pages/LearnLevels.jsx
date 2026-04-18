@@ -2,7 +2,7 @@ import { useMemo } from "preact/hooks";
 import { QrFooter } from "../components/QrFooter/QrFooter";
 import { getLearnCompletionMap } from "../levels/lib/learnProgress";
 import { LEARN_CONCEPTS } from "../levels/lib/learnConcepts";
-import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel/sessionChannel";
 import "../levels/styles/learn.css";
 
 export function LearnLevelsPage() {

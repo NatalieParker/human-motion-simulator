@@ -1,11 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
+import { env } from "../env";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-const SESSION_TABLE = import.meta.env.VITE_SUPABASE_SESSION_TABLE || "session_state";
+const SUPABASE_URL = env.VITE_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || "";
+const SESSION_TABLE = env.VITE_SUPABASE_SESSION_TABLE || "session_state";
 
 /** Row id in session_state; set via configureSessionChannel (per tab / per phone pairing). */
-let channelSessionId = import.meta.env.VITE_SUPABASE_SESSION_ID || "";
+let channelSessionId = env.VITE_SUPABASE_SESSION_ID || "";
 
 export function configureSessionChannel(sessionId) {
   if (!sessionId || typeof sessionId !== "string") {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "preact/hooks";
 import { Chart, registerables } from "chart.js";
-import { MOTION_LABELS } from "../../lib/motionPatterns";
+import { MOTION_LABELS } from "../../lib/motionPatterns/motionPatterns";
 import "./ReferenceChart.css";
 
 Chart.register(...registerables);

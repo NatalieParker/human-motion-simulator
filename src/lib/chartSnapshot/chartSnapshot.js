@@ -37,7 +37,7 @@ export function captureSnapshot(dataWindow) {
           grid: { color: "#1e293b" },
         },
         y: {
-          title: { display: true, text: "m/s\u00B2", color: "#94a3b8", font: { size: 10 } },
+          title: { display: true, text: "m/s²", color: "#94a3b8", font: { size: 10 } },
           ticks: { color: "#64748b", font: { size: 9 } },
           grid: { color: "#1e293b" },
           min: dataMin - 5,
