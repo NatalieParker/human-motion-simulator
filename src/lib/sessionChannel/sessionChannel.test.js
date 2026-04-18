@@ -6,10 +6,6 @@ jest.mock("../supabase/supabase", () => ({
   clearSessionChannel: mockClearSessionChannel,
 }));
 
-jest.mock("../env.js", () => ({
-  env: { BASE_URL: "/" },
-}));
-
 describe("sessionChannel", () => {
   const originalWindow = global.window;
   const originalSessionStorage = global.sessionStorage;
@@ -50,5 +46,14 @@ describe("sessionChannel", () => {
     global.window.location.search = "?session=bad";
     expect(mod.applyControllerSessionFromUrl()).toBeNull();
     expect(mockClearSessionChannel).toHaveBeenCalled();
+  });
+
+  it("builds the controller URL next to the current page", () => {
+    const mod = require("./sessionChannel");
+    global.window.location.href = "https://example.com/staticGames/demo/train.html?foo=bar";
+    const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
+    expect(url).toBe(
+      "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111"
+    );
   });
 });

@@ -34,7 +34,9 @@ export function ControllerPage() {
       timestamp: now,
     };
 
-    set(sensorDataRef, payload);
+    void set(sensorDataRef, payload).catch((err) => {
+      appendLog(`Failed to write sensor_data: ${err.message}`);
+    });
     setLatestReading(payload);
 
     const msg = `CONTROLLER DATA SENT: accel(${payload.acceleration.x}, ${payload.acceleration.y}, ${payload.acceleration.z})`;
