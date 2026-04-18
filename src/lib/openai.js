@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { env } from "./env";
 
 const SANDBOX_PROMPT = `You are analyzing accelerometer data from a smartphone in someone's pocket.
 The data contains x, y, z acceleration values in m/s² sampled at 10Hz.
@@ -19,8 +20,8 @@ Example: "This motion looks like walking with 85% confidence. The data shows rhy
 Data:
 `;
 
-const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-const MODEL = import.meta.env.VITE_OPENAI_MODEL || "gpt-4o-mini";
+const API_KEY = env.VITE_OPENAI_API_KEY;
+const MODEL = env.VITE_OPENAI_MODEL || "gpt-4o-mini";
 
 function getClient() {
   if (!API_KEY) throw new Error("VITE_OPENAI_API_KEY is not set in .env");
