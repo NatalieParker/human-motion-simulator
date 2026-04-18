@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { env } from "./env";
+import { env } from "../env";
 
 const SANDBOX_PROMPT = `You are analyzing accelerometer data from a smartphone in someone's pocket.
 The data contains x, y, z acceleration values in m/s² sampled at 10Hz.

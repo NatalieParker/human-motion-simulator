@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
-import { classifyLocalMotion } from "../lib/motionMatcher";
-import { captureSnapshot } from "../lib/chartSnapshot";
+import { classifyLocalMotion } from "../lib/motionMatcher/motionMatcher";
+import { captureSnapshot } from "../lib/chartSnapshot/chartSnapshot";
 import { LiveChart } from "../components/LiveChart/LiveChart";
 import { PatternCard } from "../components/PatternCard/PatternCard";
 import { QrFooter } from "../components/QrFooter/QrFooter";
-import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel/sessionChannel";
 import "../styles/sandbox.css";
 
 const DETECTION_INTERVAL_MS = 4000;

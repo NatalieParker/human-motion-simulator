@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import { fetchGameData, initPortalBridge, saveGameData } from "./portalBridge";
+import { fetchGameData, initPortalBridge, saveGameData } from "../portalBridge/portalBridge";
 
 type JsonRecord = Record<string, unknown>;
 

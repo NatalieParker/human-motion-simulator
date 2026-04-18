@@ -4,8 +4,8 @@ import { ReferenceChart } from "../components/ReferenceChart";
 import { QrFooter } from "../../components/QrFooter/QrFooter";
 import { signalRef, sensorDataRef, set, onValue } from "../../lib/firebase";
 import { markLevelCompleted } from "../lib/learnProgress";
-import { initDesktopPairingSession, resetDesktopPairingSession } from "../../lib/sessionChannel";
-import { coachConceptAnswer } from "../../lib/openai";
+import { initDesktopPairingSession, resetDesktopPairingSession } from "../../lib/sessionChannel/sessionChannel";
+import { coachConceptAnswer } from "../../lib/openai/openai";
 import "../styles/learn.css";
 
 export function LearnConceptLevel({ concept, pageTitle }) {

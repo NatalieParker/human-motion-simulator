@@ -19,9 +19,9 @@ A Vite + Preact app that streams accelerometer data from a phone to a desktop br
 | **Preact** | UI |
 | **Supabase JS** (`@supabase/supabase-js`) | Upserts + realtime subscriptions on a `session_state` table |
 | **Chart.js** | Live charts on dashboard-style views |
-| **OpenAI** (optional) | Learning helpers and sandbox pattern analysis when `VITE_OPENAI_API_KEY` is set (`src/lib/openai.js`) |
+| **OpenAI** (optional) | Learning helpers and sandbox pattern analysis when `VITE_OPENAI_API_KEY` is set (`src/lib/openai/openai.js`) |
 
-The realtime bridge lives in `src/lib/supabase.js`: it mirrors the old “Firebase path” idea (`session/signal`, `session/sensorData`) as columns on one row per session.
+The realtime bridge lives in `src/lib/supabase/supabase.js`: it mirrors the old “Firebase path” idea (`session/signal`, `session/sensorData`) as columns on one row per session.
 
 ---
 

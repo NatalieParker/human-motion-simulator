@@ -1,4 +1,4 @@
-import { buildControllerPairUrl } from "../../lib/sessionChannel";
+import { buildControllerPairUrl } from "../../lib/sessionChannel/sessionChannel";
 import "./QrFooter.css";
 
 export function QrFooter({ sessionId, onNewPairing }) {
