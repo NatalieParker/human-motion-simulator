@@ -167,7 +167,7 @@ export function SandboxPage() {
     <div class="sandbox">
       <div class="sandbox__top-bar">
         <h1>Sandbox Mode</h1>
-        <a class="btn btn--secondary" href="./">Main Menu</a>
+        <a class="btn btn--secondary" href="index.html">Main Menu</a>
       </div>
 
       <div class="sandbox__controls">

@@ -361,7 +361,7 @@ export function App() {
               Dev: {devMode ? "On" : "Off"}
             </button>
           )}
-          <a class="btn btn--secondary" href="./">Main Menu</a>
+          <a class="btn btn--secondary" href="index.html">Main Menu</a>
         </div>
       </div>
 
