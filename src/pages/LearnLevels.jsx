@@ -18,7 +18,7 @@ export function LearnLevelsPage() {
     <main class="learn-page">
       <header class="learn-page__header">
         <h1>Learn</h1>
-        <a class="learn-btn learn-btn--secondary" href="../index.html">
+        <a class="learn-btn learn-btn--secondary" href="index.html">
           Main Menu
         </a>
       </header>

@@ -62,7 +62,15 @@ describe("supabase unit", () => {
     const mod = loadModule();
     mod.configureSessionChannel("session-1");
     await mod.set(mod.signalRef, "start");
+    await mod.set(mod.signalRef, "stop");
     expect(upsertMock).toHaveBeenCalled();
+    expect(upsertMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        id: "session-1",
+        signal: "stop",
+      }),
+      expect.objectContaining({ onConflict: "id" })
+    );
 
     const values = [];
     const unsub = mod.onValue(mod.sensorDataRef, (s) => values.push(s.val()));
