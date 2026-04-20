@@ -3,7 +3,7 @@ export const LEARN_CONCEPTS = [
     id: "direction-axis-change",
     title: "Direction vs. Acceleration Axes",
     summary: "Changing phone direction changes axis signs and magnitudes, not the physics itself.",
-    href: "level-direction.html",
+    href: "levels/level-direction.html",
     conceptTitle: "Direction changes axis traces, not the motion itself",
     conceptText:
       "When you move your phone left versus right, the graph can flip sign on an axis because axis direction is relative to phone orientation. The physical motion can be similar even when one axis line goes positive in one direction and negative in the other.",
@@ -16,7 +16,7 @@ export const LEARN_CONCEPTS = [
     id: "acceleration-vs-motion",
     title: "Acceleration vs Motion",
     summary: "Moving does not always mean acceleration; acceleration is change in velocity.",
-    href: "level-acceleration-vs-motion.html",
+    href: "levels/level-acceleration-vs-motion.html",
     conceptTitle: "Moving is not the same as accelerating",
     conceptText:
       "Acceleration means velocity is changing: speeding up, slowing down, or changing direction. You can move at steady speed with nearly flat acceleration, and you can be briefly still while acceleration spikes during a sudden push.",
@@ -29,7 +29,7 @@ export const LEARN_CONCEPTS = [
     id: "sharp-peaks",
     title: "Sharp Peaks From Sudden Motion",
     summary: "Flicks, jumps, and quick stops create spikes in acceleration data.",
-    href: "level-sharp-peaks.html",
+    href: "levels/level-sharp-peaks.html",
     conceptTitle: "Sudden actions make sharp acceleration peaks",
     conceptText:
       "Quick changes in velocity create large acceleration spikes. A flick, jump-like jerk, or hard stop compresses lots of change into a short time, which appears as sharp peaks on one or more axes.",
@@ -42,7 +42,7 @@ export const LEARN_CONCEPTS = [
     id: "positive-vs-negative",
     title: "Positive vs Negative Acceleration",
     summary: "Learn why axis values flip sign when movement direction flips.",
-    href: "level-positive-negative.html",
+    href: "levels/level-positive-negative.html",
     conceptTitle: "Positive and negative values represent opposite axis directions",
     conceptText:
       "Each axis has a positive and negative direction. If you reverse movement along the same axis, the sign often flips even when motion size is similar.",
@@ -55,7 +55,7 @@ export const LEARN_CONCEPTS = [
     id: "acceleration-vs-deceleration",
     title: "Acceleration vs Deceleration",
     summary: "Compare speeding up and slowing down patterns in the graph.",
-    href: "level-accel-vs-decel.html",
+    href: "levels/level-accel-vs-decel.html",
     conceptTitle: "Speeding up and slowing down are both acceleration",
     conceptText:
       "Acceleration includes both increasing speed and decreasing speed. Deceleration is acceleration opposite the motion direction, so its axis pattern can differ in sign from speeding up.",
@@ -68,7 +68,7 @@ export const LEARN_CONCEPTS = [
     id: "acceleration-with-g",
     title: "Acceleration With G",
     summary: "Tilt your phone on each axis to see how gravity appears in acceleration-with-G data.",
-    href: "level-acceleration-with-g.html",
+    href: "levels/level-acceleration-with-g.html",
     conceptTitle: "Gravity contributes a steady acceleration component",
     conceptText:
       "Acceleration with gravity includes the gravitational vector, so tilting the phone redistributes gravity across axes. Even without deliberate motion, axis values can shift as orientation changes.",
@@ -81,7 +81,7 @@ export const LEARN_CONCEPTS = [
     id: "g-baseline-stillness",
     title: "Match a Mystery Motion Trace",
     summary: "Observe pre-made acceleration data (without G), guess the movement, then recreate it.",
-    href: "level-g-baseline-stillness.html",
+    href: "levels/level-g-baseline-stillness.html",
     conceptTitle: "Read a sample trace, then try to match it",
     conceptText:
       "This level starts with a pre-made acceleration trace (without gravity) from a short phone action. Your job is to interpret what movement might have created the pattern, then try your own version to match the shape.",
@@ -112,7 +112,7 @@ export const LEARN_CONCEPTS = [
     id: "g-axis-transfer",
     title: "Gravity Transfers Across Axes",
     summary: "Tilting moves gravity contribution from one axis to another.",
-    href: "level-g-axis-transfer.html",
+    href: "levels/level-g-axis-transfer.html",
     conceptTitle: "Tilting redistributes gravity",
     conceptText:
       "When you rotate the phone, gravity does not disappear, but its contribution shifts between x/y/z axes. One axis can decrease while another increases as the gravity vector is reprojected.",
@@ -125,7 +125,7 @@ export const LEARN_CONCEPTS = [
     id: "with-g-vs-without-g",
     title: "With-G vs Without-G During Motion",
     summary: "Compare traces to separate gravity baseline from motion-driven changes.",
-    href: "level-with-g-vs-without-g.html",
+    href: "levels/level-with-g-vs-without-g.html",
     conceptTitle: "Separate gravity from motion acceleration",
     conceptText:
       "Acceleration-without-G emphasizes motion changes, while acceleration-with-G includes both motion and gravity. Comparing both helps you tell whether a signal is orientation-related or movement-related.",
@@ -138,7 +138,7 @@ export const LEARN_CONCEPTS = [
     id: "fast-vs-slow-acceleration",
     title: "Fast vs Slow Acceleration",
     summary: "Compare how quickly changing velocity shapes peak size and sharpness.",
-    href: "level-fast-vs-slow-acceleration.html",
+    href: "levels/level-fast-vs-slow-acceleration.html",
     conceptTitle: "Rate of change controls acceleration intensity",
     conceptText:
       "Faster velocity changes create larger, sharper acceleration peaks. Slower transitions spread the same overall movement over more time, producing smaller and smoother curves.",
@@ -151,7 +151,7 @@ export const LEARN_CONCEPTS = [
     id: "complex-circular-motion",
     title: "Acceleration in Complex Circular Motion",
     summary: "Circular movement combines changing direction and axis coupling.",
-    href: "level-complex-circular-motion.html",
+    href: "levels/level-complex-circular-motion.html",
     conceptTitle: "Complex motion creates coordinated multi-axis traces",
     conceptText:
       "In circular motion, velocity direction changes continuously, so acceleration appears across multiple axes at once. The resulting traces are coordinated and phase-shifted rather than single isolated spikes.",
@@ -164,7 +164,7 @@ export const LEARN_CONCEPTS = [
     id: "freefall-acceleration",
     title: "Freefall Acceleration",
     summary: "Observe acceleration with-G and without-G when the phone is briefly in freefall.",
-    href: "level-freefall.html",
+    href: "levels/level-freefall.html",
     conceptTitle: "Freefall creates distinctive acceleration behavior",
     conceptText:
       "During brief freefall, measured acceleration patterns change sharply because support forces drop. Handle this safely over a soft surface with a very small toss.",

@@ -10,7 +10,7 @@ describeSupabase("supabase live integration", () => {
   it("writes and reads a real session_state row", async () => {
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const id = `jest-live-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const payload = {
+    const startPayload = {
       id,
       signal: "start",
       sensor_data: {
@@ -20,8 +20,18 @@ describeSupabase("supabase live integration", () => {
       updated_at: new Date().toISOString(),
     };
 
-    const write = await client.from(SESSION_TABLE).upsert(payload, { onConflict: "id" });
+    const write = await client.from(SESSION_TABLE).upsert(startPayload, { onConflict: "id" });
     expect(write.error).toBeNull();
+
+    const stopWrite = await client.from(SESSION_TABLE).upsert(
+      {
+        id,
+        signal: "stop",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+    expect(stopWrite.error).toBeNull();
 
     const read = await client
       .from(SESSION_TABLE)
@@ -33,7 +43,7 @@ describeSupabase("supabase live integration", () => {
     expect(read.data).toEqual(
       expect.objectContaining({
         id,
-        signal: "start",
+        signal: "stop",
       })
     );
     expect(read.data.sensor_data).toEqual(
