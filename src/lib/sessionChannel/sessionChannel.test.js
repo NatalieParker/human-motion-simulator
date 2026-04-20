@@ -48,9 +48,18 @@ describe("sessionChannel", () => {
     expect(mockClearSessionChannel).toHaveBeenCalled();
   });
 
-  it("builds the controller URL next to the current page", () => {
+  it("builds the controller URL next to root pages", () => {
     const mod = require("./sessionChannel");
     global.window.location.href = "https://example.com/staticGames/demo/train.html?foo=bar";
+    const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
+    expect(url).toBe(
+      "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111"
+    );
+  });
+
+  it("builds the controller URL from level pages under /levels/", () => {
+    const mod = require("./sessionChannel");
+    global.window.location.href = "https://example.com/staticGames/demo/levels/level-direction.html";
     const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
     expect(url).toBe(
       "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111"

@@ -92,7 +92,7 @@ export function LearnConceptLevel({ concept, pageTitle }) {
   function handleFinishLevel() {
     markLevelCompleted(concept.id);
     set(signalRef, "stop");
-    window.location.href = "levels.html";
+    window.location.href = "../levels.html";
   }
 
   function handleNewPairing() {
@@ -104,7 +104,7 @@ export function LearnConceptLevel({ concept, pageTitle }) {
     <main class="learn-page">
       <header class="learn-page__header">
         <h1>{pageTitle}</h1>
-        <a class="learn-btn learn-btn--secondary" href="levels.html">
+        <a class="learn-btn learn-btn--secondary" href="../levels.html">
           Back to Learn
         </a>
       </header>
