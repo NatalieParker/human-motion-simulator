@@ -1,9 +1,14 @@
 const mockConfigureSessionChannel = jest.fn();
 const mockClearSessionChannel = jest.fn();
+const mockEnv = { BASE_URL: "/staticGames/demo/" };
 
 jest.mock("../supabase/supabase", () => ({
   configureSessionChannel: mockConfigureSessionChannel,
   clearSessionChannel: mockClearSessionChannel,
+}));
+
+jest.mock("../env.js", () => ({
+  env: mockEnv,
 }));
 
 describe("sessionChannel", () => {
@@ -13,6 +18,7 @@ describe("sessionChannel", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEnv.BASE_URL = "/staticGames/demo/";
     const store = new Map();
     global.sessionStorage = {
       getItem: (k) => store.get(k) ?? null,
@@ -48,21 +54,22 @@ describe("sessionChannel", () => {
     expect(mockClearSessionChannel).toHaveBeenCalled();
   });
 
-  it("builds the controller URL next to root pages", () => {
+  it("builds the controller URL using BASE_URL (portal static host path)", () => {
     const mod = require("./sessionChannel");
-    global.window.location.href = "https://example.com/staticGames/demo/train.html?foo=bar";
+    global.window.location.href = "https://example.com/games/human-motion";
     const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
     expect(url).toBe(
       "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111"
     );
   });
 
-  it("builds the controller URL from level pages under /levels/", () => {
+  it("falls back to origin root when BASE_URL is /", () => {
     const mod = require("./sessionChannel");
     global.window.location.href = "https://example.com/staticGames/demo/levels/level-direction.html";
+    mockEnv.BASE_URL = "/";
     const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
     expect(url).toBe(
-      "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111"
+      "https://example.com/controller.html?session=11111111-1111-4111-8111-111111111111"
     );
   });
 });

@@ -1,4 +1,5 @@
 import { configureSessionChannel, clearSessionChannel } from "../supabase/supabase";
+import { env } from "../env";
 
 const STORAGE_KEY = "hms_pairing_session_id";
 
@@ -59,20 +60,9 @@ export function applyControllerSessionFromUrl() {
 /** Full URL to controller.html with ?session= for this browser tab’s pairing id. */
 export function buildControllerPairUrl(sessionId) {
   if (typeof window === "undefined" || !sessionId) return "";
-  const pageUrl = new URL(window.location.href);
-  const levelsSegment = "/levels/";
-  const levelsIdx = pageUrl.pathname.indexOf(levelsSegment);
-
-  if (levelsIdx >= 0) {
-    pageUrl.pathname = pageUrl.pathname.slice(0, levelsIdx + 1);
-  } else {
-    pageUrl.pathname = pageUrl.pathname.slice(0, pageUrl.pathname.lastIndexOf("/") + 1);
-  }
-
-  pageUrl.search = "";
-  pageUrl.hash = "";
-
-  const url = new URL("controller.html", pageUrl);
+  const base = typeof env.BASE_URL === "string" && env.BASE_URL ? env.BASE_URL : "/";
+  const baseUrl = new URL(base, window.location.origin);
+  const url = new URL("controller.html", baseUrl);
   url.searchParams.set("session", sessionId);
   return url.href;
 }
