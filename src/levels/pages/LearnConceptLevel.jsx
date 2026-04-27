@@ -6,10 +6,12 @@ import { signalRef, sensorDataRef, set, onValue } from "../../lib/firebase";
 import { markLevelCompleted } from "../lib/learnProgress";
 import { initDesktopPairingSession, resetDesktopPairingSession } from "../../lib/sessionChannel/sessionChannel";
 import { coachConceptAnswer } from "../../lib/openai/openai";
+import { usePortalGameData } from "../../lib/usePortalGameData/usePortalGameData";
 import "../styles/learn.css";
 
 export function LearnConceptLevel({ concept, pageTitle }) {
   const sessionId = useMemo(() => initDesktopPairingSession(), []);
+  const { data: portalData, mergeAndPersist } = usePortalGameData();
   const [running, setRunning] = useState(false);
   const [sensorData, setSensorData] = useState(null);
   const [samples, setSamples] = useState([]);
@@ -91,6 +93,18 @@ export function LearnConceptLevel({ concept, pageTitle }) {
 
   function handleFinishLevel() {
     markLevelCompleted(concept.id);
+    const existingCompletion =
+      portalData.learn_completion &&
+      typeof portalData.learn_completion === "object" &&
+      !Array.isArray(portalData.learn_completion)
+        ? portalData.learn_completion
+        : {};
+    mergeAndPersist({
+      learn_completion: {
+        ...existingCompletion,
+        [concept.id]: true,
+      },
+    });
     set(signalRef, "stop");
     window.location.href = "../levels.html";
   }

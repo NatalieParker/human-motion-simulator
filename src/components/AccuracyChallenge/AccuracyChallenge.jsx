@@ -25,6 +25,7 @@ export function AccuracyChallenge({
 }) {
   const [phase, setPhase] = useState("intro");
   const [matchScore, setMatchScore] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(null);
   const [chartKey, setChartKey] = useState(0);
 
   const startTimeRef = useRef(Date.now());
@@ -45,6 +46,7 @@ export function AccuracyChallenge({
     matchCountRef.current = 0;
     smoothedScoreRef.current = 0;
     setMatchScore(0);
+    setElapsedMs(null);
     setPhase("active");
   }
 
@@ -72,6 +74,7 @@ export function AccuracyChallenge({
         matchCountRef.current++;
         if (matchCountRef.current >= SUSTAINED_FRAMES) {
           onStop();
+          setElapsedMs(Date.now() - startTimeRef.current);
           setPhase("result");
         }
       } else {
@@ -124,7 +127,10 @@ export function AccuracyChallenge({
       <p class="challenge-panel__desc">
         You matched {MOTION_LABELS[motion]} with high accuracy!
       </p>
-      <button class="btn btn--start" onClick={() => onComplete(100)}>
+      <button
+        class="btn btn--start"
+        onClick={() => onComplete({ type: "accuracy", score: 100, elapsedMs })}
+      >
         Continue
       </button>
     </div>

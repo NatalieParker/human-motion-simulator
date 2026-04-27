@@ -22,6 +22,33 @@ const CHALLENGE_CHANCE = 0.5;
 const CHALLENGE_TYPES = ["stillness", "rhythm", "accuracy"];
 const DEV_MODE_ENABLED =
   import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_MODE === "true";
+const TRAIN_STATS_DEFAULT = Object.freeze({
+  best_match_time_ms: null,
+  best_times_by_motion: {},
+  challenges: {},
+});
+
+function isObjectRecord(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function getTrainStats(portalData) {
+  if (!isObjectRecord(portalData?.train_stats)) return TRAIN_STATS_DEFAULT;
+  const stats = portalData.train_stats;
+  return {
+    best_match_time_ms:
+      Number.isFinite(stats.best_match_time_ms) && stats.best_match_time_ms > 0
+        ? stats.best_match_time_ms
+        : null,
+    best_times_by_motion: isObjectRecord(stats.best_times_by_motion) ? stats.best_times_by_motion : {},
+    challenges: isObjectRecord(stats.challenges) ? stats.challenges : {},
+  };
+}
+
+function formatDurationMs(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return "--";
+  return `${(ms / 1000).toFixed(2)}s`;
+}
 const MOTION_QUESTIONS = {
   walking: [
     "What makes this graph look like walking instead of running?",
@@ -72,8 +99,12 @@ export function App() {
   const [learningLoading, setLearningLoading] = useState(false);
   const [learningError, setLearningError] = useState(null);
   const [matchedUserPattern, setMatchedUserPattern] = useState(null);
+  const [lastMatchTimeMs, setLastMatchTimeMs] = useState(null);
   const { data: portalData, mergeAndPersist } = usePortalGameData();
   const [pairingSessionId, setPairingSessionId] = useState(null);
+  const trainStats = getTrainStats(portalData);
+  const bestTimeForMotion = Number(trainStats.best_times_by_motion?.[motion]);
+  const challengeStats = trainStats.challenges || {};
 
   const startTimeRef = useRef(Date.now());
   const liveBufferRef = useRef([]);
@@ -126,6 +157,67 @@ export function App() {
     mergeAndPersist(nextData);
   }
 
+  function saveTrainMatchTime(elapsedMs) {
+    if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) return;
+    const nextByMotion = {
+      ...trainStats.best_times_by_motion,
+      [motion]: Number.isFinite(bestTimeForMotion) && bestTimeForMotion > 0
+        ? Math.min(bestTimeForMotion, elapsedMs)
+        : elapsedMs,
+    };
+    const previousOverall = Number(trainStats.best_match_time_ms);
+    const nextOverall =
+      Number.isFinite(previousOverall) && previousOverall > 0
+        ? Math.min(previousOverall, elapsedMs)
+        : elapsedMs;
+    mergeAndPersist({
+      train_stats: {
+        ...trainStats,
+        best_match_time_ms: nextOverall,
+        best_times_by_motion: nextByMotion,
+      },
+    });
+  }
+
+  function saveChallengeResult(result) {
+    if (!isObjectRecord(result)) return;
+    const nextChallenges = { ...challengeStats };
+
+    if (result.type === "stillness") {
+      const score = Number(result.score);
+      const prev = Number(nextChallenges.stillness_best_accuracy);
+      if (Number.isFinite(score)) {
+        nextChallenges.stillness_best_accuracy =
+          Number.isFinite(prev) ? Math.max(prev, score) : score;
+      }
+    }
+
+    if (result.type === "rhythm") {
+      const score = Number(result.score);
+      const prev = Number(nextChallenges.rhythm_best_score);
+      if (Number.isFinite(score)) {
+        nextChallenges.rhythm_best_score =
+          Number.isFinite(prev) ? Math.max(prev, score) : score;
+      }
+    }
+
+    if (result.type === "accuracy") {
+      const elapsedMs = Number(result.elapsedMs);
+      const prev = Number(nextChallenges.accuracy_best_time_ms);
+      if (Number.isFinite(elapsedMs) && elapsedMs > 0) {
+        nextChallenges.accuracy_best_time_ms =
+          Number.isFinite(prev) && prev > 0 ? Math.min(prev, elapsedMs) : elapsedMs;
+      }
+    }
+
+    mergeAndPersist({
+      train_stats: {
+        ...trainStats,
+        challenges: nextChallenges,
+      },
+    });
+  }
+
   useEffect(() => {
     if (gameState !== "running" || !sensorData || devMode) return;
 
@@ -156,6 +248,9 @@ export function App() {
         matchCountRef.current++;
         if (matchCountRef.current >= SUSTAINED_FRAMES) {
           const recent = axisBuf.slice(-40);
+          const elapsedMs = Date.now() - startTimeRef.current;
+          setLastMatchTimeMs(elapsedMs);
+          saveTrainMatchTime(elapsedMs);
           setMatchedUserPattern({
             x: recent.map((p) => p.x),
             y: recent.map((p) => p.y),
@@ -183,6 +278,9 @@ export function App() {
         devMatchTimerRef.current = null;
         const ref = referencePattern.acceleration;
         const startIdx = Math.max(0, ref.x.length - 40);
+        const elapsedMs = Date.now() - startTimeRef.current;
+        setLastMatchTimeMs(elapsedMs);
+        saveTrainMatchTime(elapsedMs);
         setMatchedUserPattern({
           x: ref.x.slice(startIdx),
           y: ref.y.slice(startIdx),
@@ -210,6 +308,7 @@ export function App() {
     matchCountRef.current = 0;
     smoothedScoreRef.current = 0;
     setMatchScore(0);
+    setLastMatchTimeMs(null);
     setMatchedUserPattern(null);
     setGameKey((k) => k + 1);
   }
@@ -218,6 +317,7 @@ export function App() {
     set(signalRef, "stop");
     setGameState("idle");
     setMatchScore(0);
+    setLastMatchTimeMs(null);
     liveBufferRef.current = [];
     matchCountRef.current = 0;
     smoothedScoreRef.current = 0;
@@ -258,7 +358,8 @@ export function App() {
     setGameKey((k) => k + 1);
   }
 
-  function handleChallengeComplete() {
+  function handleChallengeComplete(result) {
+    saveChallengeResult(result);
     handleNewMotion();
   }
 
@@ -383,6 +484,10 @@ export function App() {
       </section>
 
       <div style={{ display: gameState === "challenge" ? "none" : "block" }}>
+        <div class="train-stats">
+          <span>Current match: {formatDurationMs(lastMatchTimeMs)}</span>
+          <span>Best ({motion}): {formatDurationMs(bestTimeForMotion)}</span>
+        </div>
         <MatchMeter score={matchScore} gameState={gameState} />
 
         <ReferenceChart pattern={referencePattern} motion={motion} />

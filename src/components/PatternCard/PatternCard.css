@@ -23,6 +23,12 @@
   margin-bottom: 0.75rem;
 }
 
+.pattern-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .pattern-card__badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
@@ -51,6 +57,25 @@
   margin-left: auto;
   font-size: 0.75rem;
   color: #64748b;
+}
+
+.pattern-card__delete-btn {
+  appearance: none;
+  border: 1px solid #475569;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 7px;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.pattern-card__delete-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+  border-color: #64748b;
 }
 
 .pattern-card__snapshot {

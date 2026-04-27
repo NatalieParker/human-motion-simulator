@@ -3,11 +3,22 @@ import { QrFooter } from "../components/QrFooter/QrFooter";
 import { getLearnCompletionMap } from "../levels/lib/learnProgress";
 import { LEARN_CONCEPTS } from "../levels/lib/learnConcepts";
 import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel/sessionChannel";
+import { usePortalGameData } from "../lib/usePortalGameData/usePortalGameData";
 import "../levels/styles/learn.css";
 
 export function LearnLevelsPage() {
   const sessionId = useMemo(() => initDesktopPairingSession(), []);
-  const completion = useMemo(() => getLearnCompletionMap(), []);
+  const { data: portalData } = usePortalGameData();
+  const completion = useMemo(() => {
+    const localCompletion = getLearnCompletionMap();
+    const portalCompletion =
+      portalData.learn_completion &&
+      typeof portalData.learn_completion === "object" &&
+      !Array.isArray(portalData.learn_completion)
+        ? portalData.learn_completion
+        : {};
+    return { ...localCompletion, ...portalCompletion };
+  }, [portalData]);
 
   function handleNewPairing() {
     resetDesktopPairingSession();

@@ -112,7 +112,10 @@ export function StillnessChallenge({
       <p class="challenge-panel__desc">
         of your data stayed within the stillness threshold
       </p>
-      <button class="btn btn--start" onClick={() => onComplete(score)}>
+      <button
+        class="btn btn--start"
+        onClick={() => onComplete({ type: "stillness", score })}
+      >
         Continue
       </button>
     </div>
