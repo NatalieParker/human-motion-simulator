@@ -27,6 +27,45 @@
   text-decoration: none;
 }
 
+.train-intro {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+}
+
+.train-intro__title {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.train-intro__summary {
+  margin: 0 0 0.5rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.train-intro__desc {
+  margin: 0;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.train-intro__steps {
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.train-intro__steps li + li {
+  margin-top: 0.25rem;
+}
+
 .game-controls {
   display: flex;
   justify-content: center;

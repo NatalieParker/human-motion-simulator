@@ -354,8 +354,9 @@ export function App() {
   return (
     <div class="container">
       <div class="top-bar">
-        <h1>Human Motion Simulator</h1>
+        <h1>Human Motion Matching</h1>
         <div class="top-bar__actions">
+          <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
           {DEV_MODE_ENABLED && (
             <button class="btn btn--secondary" onClick={handleToggleDevMode}>
               Dev: {devMode ? "On" : "Off"}
@@ -364,6 +365,22 @@ export function App() {
           <a class="btn btn--secondary" href="index.html">Main Menu</a>
         </div>
       </div>
+
+      <section class="train-intro">
+        <h2 class="train-intro__title">How to play</h2>
+        <p class="train-intro__summary">
+          This game trains you to recognize and reproduce motion signatures like walking, running,
+          and jumping by matching your live acceleration curve to a target pattern.
+        </p>
+        <p class="train-intro__desc">
+          Pair your phone, then try to move it so your live graph matches the target pattern.
+        </p>
+        <ol class="train-intro__steps">
+          <li>Tap <strong>Pair Phone</strong> and scan the QR code on your phone.</li>
+          <li>Press <strong>Start</strong> and perform the shown motion pattern.</li>
+          <li>Watch the match score rise, then hit <strong>Next</strong> when matched.</li>
+        </ol>
+      </section>
 
       <div style={{ display: gameState === "challenge" ? "none" : "block" }}>
         <MatchMeter score={matchScore} gameState={gameState} />
@@ -375,6 +392,8 @@ export function App() {
           sensorData={sensorData}
           running={gameState === "running"}
           startTime={startTimeRef.current}
+          pairingSessionId={pairingSessionId}
+          onNewPairing={handleNewPairing}
         />
 
         <div class="game-controls">
@@ -407,6 +426,8 @@ export function App() {
           sensorData={sensorData}
           referencePattern={referencePattern}
           motion={motion}
+          pairingSessionId={pairingSessionId}
+          onNewPairing={handleNewPairing}
           onComplete={handleChallengeComplete}
           onSkip={handleChallengeSkip}
           onStart={() => set(signalRef, "start")}
@@ -468,8 +489,6 @@ export function App() {
           </div>
         </div>
       )}
-
-      <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
     </div>
   );
 }

@@ -17,6 +17,8 @@ export function AccuracyChallenge({
   sensorData,
   referencePattern,
   motion,
+  pairingSessionId,
+  onNewPairing,
   onComplete,
   onStart,
   onStop,
@@ -107,6 +109,8 @@ export function AccuracyChallenge({
           sensorData={sensorData}
           running={true}
           startTime={startTimeRef.current}
+          pairingSessionId={pairingSessionId}
+          onNewPairing={onNewPairing}
         />
       </div>
     );

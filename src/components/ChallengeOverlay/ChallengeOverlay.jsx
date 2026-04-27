@@ -14,6 +14,8 @@ export function ChallengeOverlay({
   sensorData,
   referencePattern,
   motion,
+  pairingSessionId,
+  onNewPairing,
   onComplete,
   onSkip,
   onStart,
@@ -28,6 +30,8 @@ export function ChallengeOverlay({
         sensorData={sensorData}
         referencePattern={referencePattern}
         motion={motion}
+        pairingSessionId={pairingSessionId}
+        onNewPairing={onNewPairing}
         onComplete={onComplete}
         onStart={onStart}
         onStop={onStop}

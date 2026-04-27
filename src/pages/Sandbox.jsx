@@ -167,8 +167,23 @@ export function SandboxPage() {
     <div class="sandbox">
       <div class="sandbox__top-bar">
         <h1>Sandbox Mode</h1>
-        <a class="btn btn--secondary" href="index.html">Main Menu</a>
+        <div class="sandbox__top-actions">
+          <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
+          <a class="btn btn--secondary" href="index.html">Main Menu</a>
+        </div>
       </div>
+
+      <section class="sandbox-intro">
+        <p class="sandbox-intro__summary">
+          Sandbox lets you explore free-form phone movement and see how raw acceleration patterns
+          are detected and labeled over time.
+        </p>
+        <ol class="sandbox-intro__steps">
+          <li>Pair your phone, then press <strong>Start</strong> to stream live sensor data.</li>
+          <li>Use the scrubber to capture interesting snippets and compare detected patterns.</li>
+          <li>Send snippets to OpenAI for analysis and learning, and compare openAI's analysis to your own.</li>
+        </ol>
+      </section>
 
       <div class="sandbox__controls">
         {!running ? (
@@ -187,6 +202,8 @@ export function SandboxPage() {
         sensorData={sensorData}
         running={running}
         startTime={startTimeRef.current}
+        pairingSessionId={pairingSessionId}
+        onNewPairing={handleNewPairing}
       />
 
       <div class="sandbox__scrubber">
@@ -255,7 +272,6 @@ export function SandboxPage() {
           ))}
         </div>
       )}
-      <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
     </div>
   );
 }

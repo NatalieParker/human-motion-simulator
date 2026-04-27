@@ -18,15 +18,22 @@ export function LearnLevelsPage() {
     <main class="learn-page">
       <header class="learn-page__header">
         <h1>Learn</h1>
-        <a class="learn-btn learn-btn--secondary" href="index.html">
-          Main Menu
-        </a>
+        <div class="learn-page__header-actions">
+          <QrFooter sessionId={sessionId} onNewPairing={handleNewPairing} />
+          <a class="learn-btn learn-btn--secondary" href="index.html">
+            Main Menu
+          </a>
+        </div>
       </header>
 
-      <p class="learn-page__intro">
-        Choose a concept card to start a focused mini-lesson. Completed cards stay marked as
-        completed even if you retry the level.
-      </p>
+      <section class="learn-intro">
+        <p class="learn-intro__summary">
+          Learn mode breaks motion science into focused mini-lessons so you can connect movement
+          ideas with real acceleration patterns.
+        </p>
+        <br></br>
+        <p>Open any concept card to start a short guided lesson.</p>
+      </section>
 
       <section class="learn-grid">
         {LEARN_CONCEPTS.map((level) => {
@@ -54,8 +61,6 @@ export function LearnLevelsPage() {
           );
         })}
       </section>
-
-      <QrFooter sessionId={sessionId} onNewPairing={handleNewPairing} />
     </main>
   );
 }

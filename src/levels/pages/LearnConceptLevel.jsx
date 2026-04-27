@@ -104,9 +104,12 @@ export function LearnConceptLevel({ concept, pageTitle }) {
     <main class="learn-page">
       <header class="learn-page__header">
         <h1>{pageTitle}</h1>
-        <a class="learn-btn learn-btn--secondary" href="../levels.html">
-          Back to Learn
-        </a>
+        <div class="learn-page__header-actions">
+          <QrFooter sessionId={sessionId} onNewPairing={handleNewPairing} />
+          <a class="learn-btn learn-btn--secondary" href="../levels.html">
+            Back to Learn
+          </a>
+        </div>
       </header>
 
       <section class="concept-card">
@@ -156,7 +159,13 @@ export function LearnConceptLevel({ concept, pageTitle }) {
         </div>
       </section>
 
-      <LiveChart sensorData={sensorData} running={running} startTime={startTimeRef.current} />
+      <LiveChart
+        sensorData={sensorData}
+        running={running}
+        startTime={startTimeRef.current}
+        pairingSessionId={sessionId}
+        onNewPairing={handleNewPairing}
+      />
 
       {questionOpen && (
         <section class="question-card">
@@ -184,8 +193,6 @@ export function LearnConceptLevel({ concept, pageTitle }) {
           {aiFeedback && <p class="learn-feedback">{aiFeedback}</p>}
         </section>
       )}
-
-      <QrFooter sessionId={sessionId} onNewPairing={handleNewPairing} />
     </main>
   );
 }
