@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from "preact/hooks";
+import { useState, useEffect, useRef, useCallback, useMemo } from "preact/hooks";
 import { signalRef, sensorDataRef, set, onValue } from "../lib/firebase";
 import { round, fmt } from "../lib/format";
 import { StatusBadge } from "../components/StatusBadge/StatusBadge";
 import { QrFooter } from "../components/QrFooter/QrFooter";
+import { getControllerSessionFromUrl } from "../lib/sessionChannel/sessionChannel";
 import "../styles/controller.css";
 
 const SEND_INTERVAL_MS = 100;
 
 export function ControllerPage() {
+  const sessionId = useMemo(() => getControllerSessionFromUrl(), []);
   const [sensorEnabled, setSensorEnabled] = useState(false);
   const [status, setStatus] = useState({ text: "Sensor not enabled", variant: "idle" });
   const [latestReading, setLatestReading] = useState(null);
@@ -90,6 +92,7 @@ export function ControllerPage() {
   return (
     <div class="controller">
       <h1>Controller (Mobile)</h1>
+      <QrFooter sessionId={sessionId} buttonLabel="Pairing Info" />
 
       <div class="controller__status">
         <StatusBadge text={status.text} variant={status.variant} />
@@ -111,7 +114,6 @@ export function ControllerPage() {
       </div>
 
       <Log entries={logs} />
-      <QrFooter />
     </div>
   );
 }

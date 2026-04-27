@@ -121,7 +121,10 @@ export function RhythmChallenge({ sensorData, onComplete, onStart, onStop }) {
       <p class="challenge-panel__desc">
         {hitCount} hits out of {TOTAL_BEATS} beats
       </p>
-      <button class="btn btn--start" onClick={() => onComplete(score)}>
+      <button
+        class="btn btn--start"
+        onClick={() => onComplete({ type: "rhythm", score, bpm })}
+      >
         Continue
       </button>
     </div>

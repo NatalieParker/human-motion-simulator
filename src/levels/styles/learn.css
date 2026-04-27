@@ -17,9 +17,43 @@
   text-align: left;
 }
 
-.learn-page__intro {
-  color: #94a3b8;
+.learn-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.learn-intro {
   margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+}
+
+.learn-intro__title {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.learn-intro__summary {
+  margin: 0 0 0.5rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.learn-intro__steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+.learn-intro__steps li + li {
+  margin-top: 0.25rem;
 }
 
 .learn-grid {
@@ -163,4 +197,16 @@
 .learn-feedback {
   margin-top: 0.65rem;
   color: #bfdbfe;
+}
+
+@media (max-width: 700px) {
+  .learn-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .learn-page__header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }

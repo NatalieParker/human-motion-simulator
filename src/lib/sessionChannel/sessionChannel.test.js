@@ -59,7 +59,7 @@ describe("sessionChannel", () => {
     global.window.location.href = "https://example.com/games/human-motion";
     const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
     expect(url).toBe(
-      "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111"
+      "https://example.com/staticGames/demo/controller.html?session=11111111-1111-4111-8111-111111111111#session=11111111-1111-4111-8111-111111111111"
     );
   });
 
@@ -69,7 +69,14 @@ describe("sessionChannel", () => {
     mockEnv.BASE_URL = "/";
     const url = mod.buildControllerPairUrl("11111111-1111-4111-8111-111111111111");
     expect(url).toBe(
-      "https://example.com/controller.html?session=11111111-1111-4111-8111-111111111111"
+      "https://example.com/controller.html?session=11111111-1111-4111-8111-111111111111#session=11111111-1111-4111-8111-111111111111"
     );
+  });
+
+  it("reads controller session id from hash fallback", () => {
+    const mod = require("./sessionChannel");
+    global.window.location.search = "";
+    global.window.location.hash = "#session=11111111-1111-4111-8111-111111111111";
+    expect(mod.getControllerSessionFromUrl()).toBe("11111111-1111-4111-8111-111111111111");
   });
 });

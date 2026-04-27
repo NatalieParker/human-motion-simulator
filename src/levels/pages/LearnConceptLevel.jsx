@@ -6,10 +6,12 @@ import { signalRef, sensorDataRef, set, onValue } from "../../lib/firebase";
 import { markLevelCompleted } from "../lib/learnProgress";
 import { initDesktopPairingSession, resetDesktopPairingSession } from "../../lib/sessionChannel/sessionChannel";
 import { coachConceptAnswer } from "../../lib/openai/openai";
+import { usePortalGameData } from "../../lib/usePortalGameData/usePortalGameData";
 import "../styles/learn.css";
 
 export function LearnConceptLevel({ concept, pageTitle }) {
   const sessionId = useMemo(() => initDesktopPairingSession(), []);
+  const { data: portalData, mergeAndPersist } = usePortalGameData();
   const [running, setRunning] = useState(false);
   const [sensorData, setSensorData] = useState(null);
   const [samples, setSamples] = useState([]);
@@ -91,6 +93,18 @@ export function LearnConceptLevel({ concept, pageTitle }) {
 
   function handleFinishLevel() {
     markLevelCompleted(concept.id);
+    const existingCompletion =
+      portalData.learn_completion &&
+      typeof portalData.learn_completion === "object" &&
+      !Array.isArray(portalData.learn_completion)
+        ? portalData.learn_completion
+        : {};
+    mergeAndPersist({
+      learn_completion: {
+        ...existingCompletion,
+        [concept.id]: true,
+      },
+    });
     set(signalRef, "stop");
     window.location.href = "../levels.html";
   }
@@ -104,9 +118,12 @@ export function LearnConceptLevel({ concept, pageTitle }) {
     <main class="learn-page">
       <header class="learn-page__header">
         <h1>{pageTitle}</h1>
-        <a class="learn-btn learn-btn--secondary" href="../levels.html">
-          Back to Learn
-        </a>
+        <div class="learn-page__header-actions">
+          <QrFooter sessionId={sessionId} onNewPairing={handleNewPairing} />
+          <a class="learn-btn learn-btn--secondary" href="../levels.html">
+            Back to Learn
+          </a>
+        </div>
       </header>
 
       <section class="concept-card">
@@ -156,7 +173,13 @@ export function LearnConceptLevel({ concept, pageTitle }) {
         </div>
       </section>
 
-      <LiveChart sensorData={sensorData} running={running} startTime={startTimeRef.current} />
+      <LiveChart
+        sensorData={sensorData}
+        running={running}
+        startTime={startTimeRef.current}
+        pairingSessionId={sessionId}
+        onNewPairing={handleNewPairing}
+      />
 
       {questionOpen && (
         <section class="question-card">
@@ -184,8 +207,6 @@ export function LearnConceptLevel({ concept, pageTitle }) {
           {aiFeedback && <p class="learn-feedback">{aiFeedback}</p>}
         </section>
       )}
-
-      <QrFooter sessionId={sessionId} onNewPairing={handleNewPairing} />
     </main>
   );
 }

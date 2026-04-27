@@ -5,7 +5,14 @@ import "./StillnessChallenge.css";
 const DURATION = 20;
 const THRESHOLD = 0.5;
 
-export function StillnessChallenge({ sensorData, onComplete, onStart, onStop }) {
+export function StillnessChallenge({
+  sensorData,
+  pairingSessionId,
+  onNewPairing,
+  onComplete,
+  onStart,
+  onStop,
+}) {
   const [phase, setPhase] = useState("intro");
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [score, setScore] = useState(0);
@@ -92,6 +99,8 @@ export function StillnessChallenge({ sensorData, onComplete, onStart, onStop }) 
           sensorData={sensorData}
           running={true}
           startTime={startTimeRef.current}
+          pairingSessionId={pairingSessionId}
+          onNewPairing={onNewPairing}
         />
       </div>
     );
@@ -103,7 +112,10 @@ export function StillnessChallenge({ sensorData, onComplete, onStart, onStop }) 
       <p class="challenge-panel__desc">
         of your data stayed within the stillness threshold
       </p>
-      <button class="btn btn--start" onClick={() => onComplete(score)}>
+      <button
+        class="btn btn--start"
+        onClick={() => onComplete({ type: "stillness", score })}
+      >
         Continue
       </button>
     </div>

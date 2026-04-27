@@ -6,10 +6,32 @@ import { LiveChart } from "../components/LiveChart/LiveChart";
 import { PatternCard } from "../components/PatternCard/PatternCard";
 import { QrFooter } from "../components/QrFooter/QrFooter";
 import { initDesktopPairingSession, resetDesktopPairingSession } from "../lib/sessionChannel/sessionChannel";
+import { usePortalGameData } from "../lib/usePortalGameData/usePortalGameData";
 import "../styles/sandbox.css";
 
 const DETECTION_INTERVAL_MS = 4000;
 const DETECTION_WINDOW = 30;
+const MAX_SAVED_PATTERNS = 60;
+
+function normalizeSavedPatterns(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item) => item && typeof item === "object")
+    .map((item) => ({
+      id:
+        typeof item.id === "string" && item.id
+          ? item.id
+          : `${Number(item.timestamp || Date.now())}-${Math.random().toString(36).slice(2, 8)}`,
+      localMotion: typeof item.localMotion === "string" ? item.localMotion : "unknown",
+      snapshot: typeof item.snapshot === "string" ? item.snapshot : "",
+      timestamp: Number(item.timestamp || Date.now()),
+      dataWindow: Array.isArray(item.dataWindow) ? item.dataWindow : [],
+      aiResult:
+        item.aiResult && typeof item.aiResult === "object" && !Array.isArray(item.aiResult)
+          ? item.aiResult
+          : null,
+    }));
+}
 
 export function SandboxPage() {
   const [pairingSessionId, setPairingSessionId] = useState(null);
@@ -20,11 +42,13 @@ export function SandboxPage() {
   const [snippetStart, setSnippetStart] = useState(0);
   const [previewSnapshot, setPreviewSnapshot] = useState("");
   const [isPinnedScrub, setIsPinnedScrub] = useState(false);
+  const { data: portalData, isLoading: portalLoading, mergeAndPersist } = usePortalGameData();
 
   const startTimeRef = useRef(Date.now());
   const dataBufferRef = useRef([]);
   const lastCheckRef = useRef(0);
   const chartKeyRef = useRef(0);
+  const hasLoadedPortalPatternsRef = useRef(false);
 
   useEffect(() => {
     const id = initDesktopPairingSession();
@@ -40,6 +64,21 @@ export function SandboxPage() {
     });
     return () => unsubscribe();
   }, [pairingSessionId]);
+
+  useEffect(() => {
+    if (portalLoading || hasLoadedPortalPatternsRef.current) return;
+    setPatterns((prev) =>
+      prev.length > 0 ? prev : normalizeSavedPatterns(portalData.sandbox_patterns)
+    );
+    hasLoadedPortalPatternsRef.current = true;
+  }, [portalData, portalLoading]);
+
+  useEffect(() => {
+    if (!hasLoadedPortalPatternsRef.current) return;
+    mergeAndPersist({
+      sandbox_patterns: patterns.slice(0, MAX_SAVED_PATTERNS),
+    });
+  }, [patterns]);
 
   function handleNewPairing() {
     const id = resetDesktopPairingSession();
@@ -92,13 +131,15 @@ export function SandboxPage() {
         const snapshot = captureSnapshot(slice);
         setPatterns((prev) => [
           {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             localMotion: result.motion,
             snapshot,
             timestamp: Date.now(),
             dataWindow: slice,
+            aiResult: null,
           },
           ...prev,
-        ]);
+        ].slice(0, MAX_SAVED_PATTERNS));
       }
     }
   }, [sensorData, running]);
@@ -141,6 +182,16 @@ export function SandboxPage() {
     setPatterns([]);
   }
 
+  function handleDeletePattern(patternId) {
+    setPatterns((prev) => prev.filter((p) => p.id !== patternId));
+  }
+
+  function handleSaveAiResult(patternId, aiResult) {
+    setPatterns((prev) =>
+      prev.map((p) => (p.id === patternId ? { ...p, aiResult } : p))
+    );
+  }
+
   function handleSnippetStartChange(e) {
     setSnippetStart(Number(e.target.value));
     setIsPinnedScrub(true);
@@ -154,21 +205,38 @@ export function SandboxPage() {
     const snapshot = previewSnapshot || captureSnapshot(selectedWindow);
     setPatterns((prev) => [
       {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         localMotion: estimatedMotion,
         snapshot,
         timestamp: Date.now(),
         dataWindow: selectedWindow,
+        aiResult: null,
       },
       ...prev,
-    ]);
+    ].slice(0, MAX_SAVED_PATTERNS));
   }
 
   return (
     <div class="sandbox">
       <div class="sandbox__top-bar">
         <h1>Sandbox Mode</h1>
-        <a class="btn btn--secondary" href="index.html">Main Menu</a>
+        <div class="sandbox__top-actions">
+          <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
+          <a class="btn btn--secondary" href="index.html">Main Menu</a>
+        </div>
       </div>
+
+      <section class="sandbox-intro">
+        <p class="sandbox-intro__summary">
+          Sandbox lets you explore free-form phone movement and see how raw acceleration patterns
+          are detected and labeled over time.
+        </p>
+        <ol class="sandbox-intro__steps">
+          <li>Pair your phone, then press <strong>Start</strong> to stream live sensor data.</li>
+          <li>Use the scrubber to capture interesting snippets and compare detected patterns.</li>
+          <li>Send snippets to OpenAI for analysis and learning, and compare openAI's analysis to your own.</li>
+        </ol>
+      </section>
 
       <div class="sandbox__controls">
         {!running ? (
@@ -187,6 +255,8 @@ export function SandboxPage() {
         sensorData={sensorData}
         running={running}
         startTime={startTimeRef.current}
+        pairingSessionId={pairingSessionId}
+        onNewPairing={handleNewPairing}
       />
 
       <div class="sandbox__scrubber">
@@ -251,11 +321,15 @@ export function SandboxPage() {
       ) : (
         <div class="sandbox__patterns-list">
           {patterns.map((p, i) => (
-            <PatternCard key={`${p.timestamp}-${i}`} pattern={p} />
+            <PatternCard
+              key={p.id || `${p.timestamp}-${i}`}
+              pattern={p}
+              onDelete={handleDeletePattern}
+              onSaveAiResult={handleSaveAiResult}
+            />
           ))}
         </div>
       )}
-      <QrFooter sessionId={pairingSessionId} onNewPairing={handleNewPairing} />
     </div>
   );
 }

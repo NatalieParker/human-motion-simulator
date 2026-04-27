@@ -12,6 +12,13 @@
   text-align: center;
 }
 
+.home__intro {
+  margin: -1rem auto 1.25rem;
+  text-align: center;
+  color: #cbd5e1;
+  max-width: 40rem;
+}
+
 .home__cards {
   flex: 1;
   display: grid;

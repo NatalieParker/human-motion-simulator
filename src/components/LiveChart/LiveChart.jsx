@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "preact/hooks";
 import { Chart, registerables } from "chart.js";
+import { QrFooter } from "../QrFooter/QrFooter";
 import "./LiveChart.css";
 
 Chart.register(...registerables);
@@ -18,7 +19,7 @@ function makeDataset(label, data, color) {
   };
 }
 
-export function LiveChart({ sensorData, running, startTime }) {
+export function LiveChart({ sensorData, running, startTime, pairingSessionId, onNewPairing }) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef({
@@ -98,7 +99,10 @@ export function LiveChart({ sensorData, running, startTime }) {
 
   return (
     <div class="live-chart">
-      <h2>Live Sensor Data</h2>
+      <div class="live-chart__header">
+        <h2>Live Sensor Data</h2>
+        <QrFooter sessionId={pairingSessionId} onNewPairing={onNewPairing} buttonLabel="Pair Phone" />
+      </div>
       <div class="live-chart__canvas-wrap">
         <canvas ref={canvasRef} />
       </div>

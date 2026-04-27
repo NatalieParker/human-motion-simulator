@@ -11,11 +11,11 @@ const MOTION_COLORS = {
   unknown: "#a78bfa",
 };
 
-export function PatternCard({ pattern }) {
+export function PatternCard({ pattern, onDelete, onSaveAiResult }) {
   const [expanded, setExpanded] = useState(false);
-  const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const aiResult = pattern.aiResult || null;
 
   const color = MOTION_COLORS[pattern.localMotion] || MOTION_COLORS.unknown;
   const time = new Date(pattern.timestamp).toLocaleTimeString();
@@ -34,7 +34,9 @@ export function PatternCard({ pattern }) {
     setAiError(null);
     try {
       const result = await analyzeMotion(pattern.dataWindow);
-      setAiResult(result);
+      if (typeof onSaveAiResult === "function") {
+        onSaveAiResult(pattern.id, result);
+      }
     } catch (err) {
       console.error("OpenAI analysis failed:", err);
       setAiError(err.message || "Analysis failed");
@@ -47,7 +49,9 @@ export function PatternCard({ pattern }) {
     setAiError(null);
     try {
       const result = await analyzeMotion(pattern.dataWindow);
-      setAiResult(result);
+      if (typeof onSaveAiResult === "function") {
+        onSaveAiResult(pattern.id, result);
+      }
     } catch (err) {
       console.error("OpenAI analysis failed:", err);
       setAiError(err.message || "Analysis failed");
@@ -65,11 +69,25 @@ export function PatternCard({ pattern }) {
       onClick={handleClick}
     >
       <div class="pattern-card__header">
-        <span class="pattern-card__badge" style={{ background: color }}>
-          {pattern.localMotion}
-        </span>
-        <span class="pattern-card__label">Local estimate</span>
+        <div class="pattern-card__meta">
+          <span class="pattern-card__badge" style={{ background: color }}>
+            {pattern.localMotion}
+          </span>
+          <span class="pattern-card__label">Local estimate</span>
+        </div>
         <span class="pattern-card__time">{time}</span>
+        {typeof onDelete === "function" && (
+          <button
+            type="button"
+            class="pattern-card__delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(pattern.id);
+            }}
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {pattern.snapshot && (
