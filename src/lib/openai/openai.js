@@ -20,13 +20,36 @@ Example: "This motion looks like walking with 85% confidence. The data shows rhy
 Data:
 `;
 
-const API_KEY = env.VITE_OPENAI_API_KEY;
-const MODEL = env.VITE_OPENAI_MODEL || "gpt-4o-mini";
+function readEnvVar(name) {
+  const viteValue = env?.[name];
+  if (viteValue) return viteValue;
+
+  const processValue = typeof process !== "undefined" ? process?.env?.[name] : undefined;
+  if (processValue) return processValue;
+
+  const globalEnvCandidates = [
+    globalThis?.__PORTAL_ENV__,
+    globalThis?.__LOCAL_ENV__,
+    globalThis?.__ENV__,
+  ];
+  for (const candidate of globalEnvCandidates) {
+    const candidateValue = candidate?.[name];
+    if (candidateValue) return candidateValue;
+  }
+
+  return "";
+}
+
+function getModel() {
+  return readEnvVar("VITE_OPENAI_MODEL") || "gpt-4o-mini";
+}
 
 function getClient() {
-  if (!API_KEY) throw new Error("VITE_OPENAI_API_KEY is not set in .env");
+  const apiKey = readEnvVar("VITE_OPENAI_API_KEY");
+
+  if (!apiKey) throw new Error("VITE_OPENAI_API_KEY is not set");
   return new OpenAI({
-    apiKey: API_KEY,
+    apiKey,
     dangerouslyAllowBrowser: true,
   });
 }
@@ -34,7 +57,7 @@ function getClient() {
 async function completeText(prompt) {
   const openai = getClient();
   const completion = await openai.chat.completions.create({
-    model: MODEL,
+    model: getModel(),
     messages: [{ role: "user", content: prompt }],
     temperature: 0.4,
   });
