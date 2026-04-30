@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { env } from "../env";
 
 const SANDBOX_PROMPT = `You are analyzing accelerometer data from a smartphone in someone's pocket.
@@ -44,25 +43,30 @@ function getModel() {
   return readEnvVar("VITE_OPENAI_MODEL") || "gpt-4o-mini";
 }
 
-function getClient() {
-  const apiKey = readEnvVar("VITE_OPENAI_API_KEY");
-
-  if (!apiKey) throw new Error("VITE_OPENAI_API_KEY not set");
-  return new OpenAI({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  });
+function getProxyUrl() {
+  // Example: http://localhost:3000/api/ai/openai
+  return readEnvVar("VITE_OPENAI_PROXY_URL") || "/api/ai/openai";
 }
 
 async function completeText(prompt) {
-  const openai = getClient();
-  const completion = await openai.chat.completions.create({
-    model: getModel(),
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.4,
+  const res = await fetch(getProxyUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: getModel(),
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4,
+    }),
   });
-  const text = completion.choices[0]?.message?.content?.trim();
-  if (!text) throw new Error("Empty response from OpenAI");
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.error || `Proxy request failed (${res.status})`);
+  }
+
+  const text = data?.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error("Empty response from proxy/OpenAI");
   return text;
 }
 

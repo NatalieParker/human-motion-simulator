@@ -19,7 +19,6 @@
     "@supabase/supabase-js": "^2.57.4",
     "chart.js": "^4.4.3",
     "kaplay": "^3001.0.19",
-    "openai": "^4.85.0",
     "preact": "^10.29.0"
   },
   "devDependencies": {
