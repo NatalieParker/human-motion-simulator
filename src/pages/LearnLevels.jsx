@@ -47,7 +47,7 @@ export function LearnLevelsPage() {
       </section>
 
       <section class="learn-grid">
-        {LEARN_CONCEPTS.map((level) => {
+        {LEARN_CONCEPTS.map((level, index) => {
           const completed = completion[level.id] === true;
           const className = [
             "learn-card",
@@ -59,7 +59,7 @@ export function LearnLevelsPage() {
           return (
             <a key={level.id} class={className} href={level.href}>
               <div>
-                <h2>{level.title}</h2>
+                <h2>{`Level ${index + 1}: ${level.title}`}</h2>
                 <p>{level.summary}</p>
               </div>
               <div class="learn-card__footer">
