@@ -57,6 +57,11 @@ export function LearnConceptLevel({ concept, pageTitle }) {
     setRunning(false);
   }
 
+  function handleFinish() {
+    handleStop();
+    setQuestionOpen(true);
+  }
+
   function handleRetry() {
     handleStop();
     setSamples([]);
@@ -92,6 +97,7 @@ export function LearnConceptLevel({ concept, pageTitle }) {
   }
 
   function handleFinishLevel() {
+    handleStop();
     markLevelCompleted(concept.id);
     const existingCompletion =
       portalData.learn_completion &&
@@ -105,7 +111,6 @@ export function LearnConceptLevel({ concept, pageTitle }) {
         [concept.id]: true,
       },
     });
-    set(signalRef, "stop");
     window.location.href = "../levels.html";
   }
 
@@ -167,7 +172,7 @@ export function LearnConceptLevel({ concept, pageTitle }) {
           <button class="learn-btn learn-btn--secondary" onClick={handleRetry}>
             Retry
           </button>
-          <button class="learn-btn" onClick={() => setQuestionOpen(true)}>
+          <button class="learn-btn" onClick={handleFinish}>
             Finish
           </button>
         </div>
