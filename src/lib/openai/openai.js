@@ -69,15 +69,17 @@ function buildLearningReviewPrompt({ motion, question, userAnswer, targetPattern
   return `You are helping a student learn motion analysis from accelerometer graphs.
 
 Goal:
-- Explain why the user's answer is correct or not quite there yet.
+- Decide whether the answer is correct or incorrect, and tailor your response accordingly.
 - Only use the question, the user's answer, and the two graphs below.
 - If you refer to a specific line, explicitly name the line as X acceleration, Y acceleration, or Z acceleration.
 - Use plain text only. Do not use markdown, bullets, bold, italics, or special formatting.
 - Keep the whole response to one paragraph maximum.
 - Explain at a high school to college freshman reading level.
-
-Required response start:
-Begin with exactly either "Correct:" or "Not quite:"
+- Use a friendly, encouraging tone.
+- Address the learner in second person ("you"), not third person ("the student" or "the user").
+- If an answer is mostly correct, treat it as correct and say it is correct (do not say "mostly correct").
+- If the answer is correct, say what they got right and then add extra detail and feedback to deepen understanding.
+- If the answer is incorrect, explain what is wrong or missing and provide the correct explanation.
 
 Motion type: ${motion}
 Question: ${question}
@@ -168,12 +170,15 @@ Recent accelerometer samples (x, y, z):
 ${sampleSummary}
 
 Task:
-- Decide whether the student understood the concept correctly.
-- If mostly correct, reinforce the right intuition and add one deeper insight.
-- If incomplete or incorrect, explain exactly what they missed and correct it.
+- Decide whether the answer is correct or incorrect, and tailor your response accordingly.
+- Use a friendly, encouraging tone.
+- Address the learner in second person ("you"), not third person ("the student").
+- If an answer is mostly correct, treat it as correct and say it is correct (do not say "mostly correct").
+- If the answer is correct, say what they got right and then add one deeper insight.
+- If the answer is incorrect, explain exactly what is missing or wrong and provide the corrected explanation.
 - Reference axis behavior clearly (X/Y/Z, sign flips, magnitude changes) when relevant.
 - Keep to one short paragraph.
-- Start with exactly "Correct:" or "Not quite:".`;
+- Use plain text only. Do not use markdown, bullets, bold, italics, or special formatting.`;
 
   return completeText(prompt);
 }
